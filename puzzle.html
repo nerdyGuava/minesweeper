@@ -13,13 +13,14 @@
     ::-webkit-scrollbar-thumb { background: #222f43; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #33435c; }
 
+    /* Dynamic Cell Sizing */
     .ms-cell {
-      width: 36px;
-      height: 36px;
-      min-width: 36px;
-      min-height: 36px;
+      width: var(--cell-size, 42px);
+      height: var(--cell-size, 42px);
+      min-width: var(--cell-size, 42px);
+      min-height: var(--cell-size, 42px);
       font-weight: 800;
-      font-size: 1.1rem;
+      font-size: calc(var(--cell-size, 42px) * 0.5);
       user-select: none;
       transition: background-color 0.1s, transform 0.05s, border-color 0.1s;
     }
@@ -58,8 +59,12 @@
       box-shadow: inset 1px 1px 3px rgba(0,0,0,0.5);
     }
 
-    /* Void/Blocked Void Cells (Not playable parts of board) */
+    /* Void/Blocked Void Cells */
     .ms-void {
+      width: var(--cell-size, 42px);
+      height: var(--cell-size, 42px);
+      min-width: var(--cell-size, 42px);
+      min-height: var(--cell-size, 42px);
       visibility: hidden;
       pointer-events: none;
     }
@@ -77,7 +82,7 @@
 <body class="h-full flex flex-col justify-between overflow-x-hidden">
 
   <!-- Header Navigation -->
-  <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-lg z-20">
+  <header class="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between shadow-lg z-20 shrink-0">
     <div class="flex items-center gap-3">
       <a href="index.html" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition" title="Back to Classic Mode">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
@@ -103,36 +108,30 @@
   </header>
 
   <!-- Level Progress Status & Scoreboard -->
-  <main class="flex-1 flex flex-col items-center justify-start p-3 max-w-full overflow-hidden">
+  <main class="flex-1 flex flex-col items-center justify-start p-2 max-w-full overflow-hidden min-h-0">
     
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-3 mb-3 shadow-md space-y-2">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-2.5 mb-2 shadow-md space-y-2 shrink-0">
       <div class="flex items-center justify-between">
         <div>
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Current Stage</span>
-          <span id="levelTitleDisplay" class="text-base font-black text-amber-400">Level 1: The Ring</span>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Current Stage</span>
+          <span id="levelTitleDisplay" class="text-sm font-black text-amber-400">Level 1: The Ring</span>
         </div>
         <div class="flex items-center gap-2">
-          <!-- Reset Face -->
-          <button id="resetBtn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-lg transition active:scale-95 shadow">
+          <button id="resetBtn" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-lg transition active:scale-95 shadow">
             😎
           </button>
         </div>
       </div>
 
       <div class="flex items-center justify-between pt-1 border-t border-slate-800 text-xs font-bold">
-        <!-- Mines Remaining -->
         <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800">
           <span class="text-red-400">💣</span>
           <span id="mineCountDisplay" class="font-mono text-slate-200">000</span>
         </div>
-
-        <!-- Timer -->
         <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800">
           <span class="text-purple-400">⏱️</span>
           <span id="timerDisplay" class="font-mono text-purple-300">000s</span>
         </div>
-
-        <!-- Cells Remaining Counter -->
         <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800">
           <span class="text-emerald-400">🔍</span>
           <span id="safeLeftDisplay" class="font-mono text-emerald-300">00</span>
@@ -140,8 +139,8 @@
       </div>
     </div>
 
-    <!-- Scrollable Board Container -->
-    <div id="boardViewport" class="w-full overflow-auto max-h-[62vh] flex justify-start sm:justify-center items-start p-2 border border-slate-900/50 rounded-xl bg-slate-950/40 backdrop-blur-sm">
+    <!-- Scrollable Board Viewport -->
+    <div id="boardViewport" class="w-full flex-1 min-h-[55vh] flex justify-center items-center overflow-auto p-2 border border-slate-900/50 rounded-xl bg-slate-950/40 backdrop-blur-sm shadow-inner">
       <div id="boardGrid" class="grid gap-1 bg-slate-900 p-3 rounded-xl border border-slate-800/80 shadow-2xl">
         <!-- Cells Injected via JS -->
       </div>
@@ -150,7 +149,7 @@
   </main>
 
   <!-- Mobile Mode Bar -->
-  <div class="sticky bottom-0 w-full bg-slate-900/95 border-t border-slate-800 p-3 backdrop-blur z-20 flex justify-center">
+  <div class="sticky bottom-0 w-full bg-slate-900/95 border-t border-slate-800 p-2.5 backdrop-blur z-20 flex justify-center shrink-0">
     <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner w-full max-w-xs">
       <button id="modeDigBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-purple-600 text-white shadow">
         <span>⛏️</span> DIG MODE
@@ -172,16 +171,11 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-
-      <!-- Grid of 100 Levels -->
-      <div id="levelGridContainer" class="grid grid-cols-5 sm:grid-cols-10 gap-2 overflow-y-auto p-1 flex-1">
-        <!-- Level buttons injected by JS -->
-      </div>
+      <div id="levelGridContainer" class="grid grid-cols-5 sm:grid-cols-10 gap-2 overflow-y-auto p-1 flex-1"></div>
     </div>
   </div>
 
   <script>
-    /* --- AUDIO SYNTHESIZER --- */
     let soundEnabled = true;
     let audioCtx = null;
 
@@ -236,7 +230,6 @@
       }
     }
 
-    /* --- CAMPAIGN STATE & LOCAL STORAGE --- */
     let currentLevel = 1;
     let campaignData = JSON.parse(localStorage.getItem('ms_puzzle_data')) || {
       unlockedLevel: 1,
@@ -247,9 +240,7 @@
       localStorage.setItem('ms_puzzle_data', JSON.stringify(campaignData));
     }
 
-    /* --- ALGORITHMIC SHAPE GENERATOR (100 UNIQUE SHAPES) --- */
     function generateLevelShape(lvl) {
-      // Determines grid size & shapes procedurally based on level number
       let rows = Math.min(18, 8 + Math.floor(lvl / 10));
       let cols = Math.min(18, 8 + Math.floor(lvl / 10));
       let grid = [];
@@ -264,51 +255,29 @@
         let row = [];
         for (let c = 0; c < cols; c++) {
           let valid = true;
-          let nx = (c / (cols - 1)) * 2 - 1; // Normalized coordinates -1 to 1
+          let nx = (c / (cols - 1)) * 2 - 1;
           let ny = (r / (rows - 1)) * 2 - 1;
           let dist = Math.hypot(nx, ny);
 
           const shapeType = (lvl - 1) % 10;
           
           switch (shapeType) {
-            case 0: // Ring Donut
-              if (dist < 0.35 || dist > 0.95) valid = false;
-              break;
-            case 1: // Plus Cross
-              if (Math.abs(nx) > 0.4 && Math.abs(ny) > 0.4) valid = false;
-              break;
-            case 2: // Hourglass
-              if (Math.abs(nx) > Math.abs(ny) + 0.2) valid = false;
-              break;
-            case 3: // Diamond
-              if (Math.abs(nx) + Math.abs(ny) > 1.1) valid = false;
-              break;
-            case 4: // Corner L-Shape
-              if (nx > 0.1 && ny < -0.1) valid = false;
-              break;
-            case 5: // Twin Towers
-              if (Math.abs(nx) < 0.25 && Math.abs(ny) < 0.7) valid = false;
-              break;
-            case 6: // Target Bullseye
-              if (dist > 0.9 || (dist > 0.35 && dist < 0.6)) valid = false;
-              break;
-            case 7: // Chevrons
-              if ((Math.floor((r + c) / 2) % 2 === 0) && (r < 2 || r > rows - 3)) valid = false;
-              break;
-            case 8: // Maze Fortress
-              if ((r % 3 === 0 && c % 3 === 0) || (r === 0 || c === 0 || r === rows-1 || c === cols-1)) valid = false;
-              break;
-            case 9: // Fractured Star
-              if (dist > 0.95 || (Math.abs(nx * ny) < 0.05 && dist > 0.4)) valid = false;
-              break;
+            case 0: if (dist < 0.35 || dist > 0.95) valid = false; break;
+            case 1: if (Math.abs(nx) > 0.4 && Math.abs(ny) > 0.4) valid = false; break;
+            case 2: if (Math.abs(nx) > Math.abs(ny) + 0.2) valid = false; break;
+            case 3: if (Math.abs(nx) + Math.abs(ny) > 1.1) valid = false; break;
+            case 4: if (nx > 0.1 && ny < -0.1) valid = false; break;
+            case 5: if (Math.abs(nx) < 0.25 && Math.abs(ny) < 0.7) valid = false; break;
+            case 6: if (dist > 0.9 || (dist > 0.35 && dist < 0.6)) valid = false; break;
+            case 7: if ((Math.floor((r + c) / 2) % 2 === 0) && (r < 2 || r > rows - 3)) valid = false; break;
+            case 8: if ((r % 3 === 0 && c % 3 === 0) || (r === 0 || c === 0 || r === rows-1 || c === cols-1)) valid = false; break;
+            case 9: if (dist > 0.95 || (Math.abs(nx * ny) < 0.05 && dist > 0.4)) valid = false; break;
           }
-
           row.push(valid);
         }
         grid.push(row);
       }
 
-      // Calculate safe active cell count
       let activeCount = 0;
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
@@ -316,14 +285,12 @@
         }
       }
 
-      // Mine ratio scales gradually from 12% to 22%
       let mineRatio = Math.min(0.22, 0.12 + (lvl * 0.001));
       let mineCount = Math.max(3, Math.floor(activeCount * mineRatio));
 
       return { rows, cols, grid, mineCount, activeCount, name };
     }
 
-    /* --- GAME STATE VARIABLES --- */
     let levelConfig = null;
     let board = [];
     let gameStatus = 'ready';
@@ -333,15 +300,14 @@
     let timer = 0;
     let timerInterval = null;
 
-    // Touch Handling
     let touchTimer = null;
     let touchStartX = 0, touchStartY = 0;
     let isLongPressTriggered = false;
     const LONG_PRESS_MS = 280;
     const TOUCH_MOVE_THRESHOLD = 10;
 
-    /* --- DOM ELEMENTS --- */
     const boardGrid = document.getElementById('boardGrid');
+    const boardViewport = document.getElementById('boardViewport');
     const levelTitleDisplay = document.getElementById('levelTitleDisplay');
     const mineCountDisplay = document.getElementById('mineCountDisplay');
     const timerDisplay = document.getElementById('timerDisplay');
@@ -355,12 +321,27 @@
     const levelGridContainer = document.getElementById('levelGridContainer');
     const soundBtn = document.getElementById('soundBtn');
 
-    /* --- GAME INITIALIZATION --- */
+    function updateCellSizing() {
+      if (!boardViewport || !levelConfig) return;
+      const availWidth = boardViewport.clientWidth - 32;
+      const availHeight = boardViewport.clientHeight - 32;
+
+      const sizeFromWidth = Math.floor(availWidth / levelConfig.cols);
+      const sizeFromHeight = Math.floor(availHeight / levelConfig.rows);
+      
+      let calculatedSize = Math.min(sizeFromWidth, sizeFromHeight);
+      calculatedSize = Math.max(34, Math.min(64, calculatedSize));
+
+      document.documentElement.style.setProperty('--cell-size', `${calculatedSize}px`);
+    }
+
+    window.addEventListener('resize', updateCellSizing);
+
     function loadLevel(lvlNum) {
       currentLevel = lvlNum;
       levelConfig = generateLevelShape(lvlNum);
-
       levelTitleDisplay.innerText = levelConfig.name;
+      updateCellSizing();
       resetGame();
     }
 
@@ -375,7 +356,6 @@
       timerDisplay.innerText = '000s';
       updateCounters();
 
-      // Build Board Grid Matrix
       board = [];
       for (let r = 0; r < levelConfig.rows; r++) {
         let row = [];
@@ -395,6 +375,7 @@
     }
 
     function renderBoard() {
+      updateCellSizing();
       boardGrid.style.gridTemplateColumns = `repeat(${levelConfig.cols}, minmax(0, 1fr))`;
       boardGrid.innerHTML = '';
 
@@ -405,7 +386,7 @@
           cellEl.id = `cell-${r}-${c}`;
 
           if (!cellData.active) {
-            cellEl.className = 'ms-cell ms-void';
+            cellEl.className = 'ms-void';
           } else {
             cellEl.className = 'ms-cell ms-unrevealed rounded-lg flex items-center justify-center';
             
@@ -431,10 +412,7 @@
         let r = Math.floor(Math.random() * levelConfig.rows);
         let c = Math.floor(Math.random() * levelConfig.cols);
 
-        // Only place mines on active shape cells
         if (!board[r][c].active) continue;
-
-        // Keep 3x3 surrounding safe area
         if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
 
         if (!board[r][c].mine) {
@@ -443,7 +421,6 @@
         }
       }
 
-      // Calculate neighbors
       for (let r = 0; r < levelConfig.rows; r++) {
         for (let c = 0; c < levelConfig.cols; c++) {
           if (!board[r][c].active || board[r][c].mine) continue;
@@ -461,7 +438,6 @@
       }
     }
 
-    /* --- INTERACTIONS --- */
     function handleCellClick(r, c) {
       if (gameStatus === 'won' || gameStatus === 'lost') return;
       if (isFlagMode) {
@@ -532,7 +508,6 @@
       updateCounters();
     }
 
-    /* --- TOUCH LONG PRESS --- */
     function handleTouchStart(e, r, c) {
       initAudio();
       touchStartX = e.touches[0].clientX;
@@ -569,7 +544,6 @@
       if (isLongPressTriggered) e.preventDefault();
     }
 
-    /* --- TIMERS & COUNTERS --- */
     function startTimer() {
       gameStatus = 'playing';
       timerInterval = setInterval(() => {
@@ -639,14 +613,13 @@
         resetBtn.innerText = '😵';
         playSound('explode');
 
-        // Reveal all mines
         for (let r = 0; r < levelConfig.rows; r++) {
           for (let c = 0; c < levelConfig.cols; c++) {
             const cell = board[r][c];
             const el = document.getElementById(`cell-${r}-${c}`);
             if (cell.active && cell.mine && el) {
               el.classList.remove('ms-unrevealed');
-              el.classList.add('bg-red-900/80', 'border-red-600');
+              el.classList.add('bg-rose-950/90', 'border-rose-600');
               el.innerText = '💣';
             }
           }
@@ -654,7 +627,6 @@
       }
     }
 
-    /* --- LEVEL SELECT MODAL --- */
     levelSelectBtn.onclick = () => {
       levelGridContainer.innerHTML = '';
 
@@ -691,7 +663,6 @@
 
     closeLevelModalBtn.onclick = () => levelModal.classList.add('hidden');
 
-    /* --- MODE TOGGLES --- */
     modeDigBtn.onclick = () => {
       isFlagMode = false;
       modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-purple-600 text-white shadow";
@@ -712,7 +683,6 @@
       document.getElementById('soundOffIcon').classList.toggle('hidden', soundEnabled);
     };
 
-    // Initial Start
     loadLevel(campaignData.unlockedLevel || 1);
   </script>
 </body>
