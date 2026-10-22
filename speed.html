@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100 select-none">
+<html lang="en" class="h-full bg-[#070913] text-slate-100 select-none">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,11 +11,11 @@
     
     /* Custom Scrollbars */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #090d16; }
-    ::-webkit-scrollbar-thumb { background: #222f43; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #33435c; }
+    ::-webkit-scrollbar-track { background: #070913; }
+    ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #312e81; }
 
-    /* Grid Cell Base Styling */
+    /* Cyber/Synthwave Cell Base Styling */
     .ms-cell {
       width: 38px;
       height: 38px;
@@ -27,48 +27,48 @@
       transition: background-color 0.1s, transform 0.05s, border-color 0.1s;
     }
 
-    /* Unrevealed cell bevel */
+    /* Cyber Unrevealed Cell: Deep obsidian/indigo bevel with glowing purple edges */
     .ms-unrevealed {
-      background: linear-gradient(145deg, #1e293b, #0f172a);
-      border-top: 2px solid #334155;
-      border-left: 2px solid #334155;
-      border-right: 2px solid #020617;
-      border-bottom: 2px solid #020617;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      background: linear-gradient(135deg, #1e1b4b, #0f172a);
+      border-top: 2px solid #6366f1;
+      border-left: 2px solid #6366f1;
+      border-right: 2px solid #030712;
+      border-bottom: 2px solid #030712;
+      box-shadow: 0 0 6px rgba(99, 102, 241, 0.25);
     }
     
     .ms-unrevealed:active {
-      transform: scale(0.95);
+      transform: scale(0.93);
       background: #0f172a;
     }
 
     /* Long-press active indicator glow */
     .ms-pressing {
-      background: #4c1d95 !important;
-      border-color: #a855f7 !important;
-      box-shadow: 0 0 12px #a855f7 !important;
+      background: #831843 !important;
+      border-color: #f43f5e !important;
+      box-shadow: 0 0 16px #f43f5e !important;
       transform: scale(0.92);
     }
 
-    /* Revealed Empty (0) Cell - Inset dark background */
+    /* Revealed Empty (0) Cell - Deep sunken inset dark background */
     .ms-revealed-zero {
-      background: #070a12;
+      background: #0b0f19;
       border: 1px solid #111827;
-      box-shadow: inset 2px 2px 5px rgba(0,0,0,0.8);
+      box-shadow: inset 3px 3px 6px rgba(0,0,0,0.9);
     }
 
     /* Revealed Number Cell */
     .ms-revealed-num {
       background: #0d1322;
-      border: 1px solid #1e293b;
-      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.5);
+      border: 1px solid #1e1b4b;
+      box-shadow: inset 2px 2px 4px rgba(0,0,0,0.7);
     }
 
-    /* Number colors */
-    .num-1 { color: #38bdf8; } /* Cyan / Sky Blue */
-    .num-2 { color: #4ade80; } /* Neon Green */
-    .num-3 { color: #f87171; } /* Bright Red */
-    .num-4 { color: #c084fc; } /* Neon Purple */
+    /* Standard Classic & Cyber High-Contrast Number colors */
+    .num-1 { color: #38bdf8; text-shadow: 0 0 8px rgba(56, 189, 248, 0.4); } /* Sky Blue */
+    .num-2 { color: #4ade80; text-shadow: 0 0 8px rgba(74, 222, 128, 0.4); } /* Neon Green */
+    .num-3 { color: #f87171; text-shadow: 0 0 8px rgba(248, 113, 113, 0.4); } /* Bright Red */
+    .num-4 { color: #c084fc; text-shadow: 0 0 8px rgba(192, 132, 252, 0.4); } /* Neon Purple */
     .num-5 { color: #fbbf24; } /* Amber */
     .num-6 { color: #2dd4bf; } /* Teal */
     .num-7 { color: #f472b6; } /* Pink */
@@ -77,7 +77,7 @@
     /* Pulse animation for timer under 5 seconds */
     @keyframes pulse-danger {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.8; transform: scale(1.03); }
+      50% { opacity: 0.8; transform: scale(1.04); }
     }
     .animate-pulse-danger {
       animation: pulse-danger 0.6s infinite;
@@ -86,107 +86,108 @@
 </head>
 <body class="h-full flex flex-col justify-between overflow-x-hidden">
 
-  <!-- Header / Navigation Bar -->
-  <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-lg z-20">
+  <!-- Top Header Bar -->
+  <header class="bg-[#0b0f19] border-b border-indigo-950/80 px-4 py-2.5 flex items-center justify-between shadow-lg z-20 shrink-0">
     <div class="flex items-center gap-3">
-      <a href="index.html" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition" title="Back to Classic Mode">
+      <a href="index.html" class="p-2 rounded-lg bg-indigo-950/60 border border-indigo-800/50 hover:bg-indigo-900/80 text-indigo-300 hover:text-white transition" title="Back to Classic Mode">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
       </a>
       <div>
-        <h1 class="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-500">
+        <h1 class="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-400 to-amber-400 drop-shadow">
           ⚡ SPEED RUN
         </h1>
-        <p class="text-xs text-slate-400 font-medium">Beat the clock before time runs out!</p>
+        <p class="text-[10px] text-indigo-300/70 font-medium">Beat the clock before time runs out!</p>
       </div>
     </div>
 
-    <!-- Right Quick Controls -->
+    <!-- Right Controls -->
     <div class="flex items-center gap-2">
       <!-- Mute/Sound Toggle -->
-      <button id="soundBtn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 transition" title="Toggle Sound">
+      <button id="soundBtn" class="p-2 rounded-lg bg-indigo-950/60 border border-indigo-800/50 text-amber-400 transition hover:bg-indigo-900" title="Toggle Sound">
         <svg id="soundOnIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"/></svg>
         <svg id="soundOffIcon" class="w-5 h-5 hidden text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
       </button>
       <!-- Stats Modal Button -->
-      <button id="statsBtn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition" title="Speed Records">
+      <button id="statsBtn" class="p-2 rounded-lg bg-indigo-950/60 border border-indigo-800/50 text-indigo-200 hover:text-white transition hover:bg-indigo-900" title="Speed Records">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       </button>
     </div>
   </header>
 
   <!-- Level & Tier Selection Dashboard -->
-  <div class="max-w-4xl mx-auto w-full p-4 space-y-4">
+  <div class="max-w-4xl mx-auto w-full px-3 py-2 space-y-2 shrink-0">
     <!-- Difficulty Tabs -->
-    <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800 gap-1 text-sm font-bold">
-      <button class="diff-tab flex-1 py-2 rounded-lg transition text-slate-400 hover:text-white" data-diff="beginner">Beginner</button>
-      <button class="diff-tab flex-1 py-2 rounded-lg transition text-slate-400 hover:text-white" data-diff="intermediate">Intermediate</button>
-      <button class="diff-tab flex-1 py-2 rounded-lg transition text-slate-400 hover:text-white" data-diff="expert">Expert</button>
-      <button class="diff-tab flex-1 py-2 rounded-lg transition text-slate-400 hover:text-white" data-diff="custom">Custom</button>
+    <div class="flex bg-[#0b0f19] p-1 rounded-xl border border-indigo-950 gap-1 text-xs font-bold">
+      <button class="diff-tab flex-1 py-1.5 rounded-lg transition text-indigo-300 hover:text-white" data-diff="beginner">Beginner</button>
+      <button class="diff-tab flex-1 py-1.5 rounded-lg transition text-indigo-300 hover:text-white" data-diff="intermediate">Intermediate</button>
+      <button class="diff-tab flex-1 py-1.5 rounded-lg transition text-indigo-300 hover:text-white" data-diff="expert">Expert</button>
+      <button class="diff-tab flex-1 py-1.5 rounded-lg transition text-indigo-300 hover:text-white" data-diff="custom">Custom</button>
     </div>
 
     <!-- Tier Challenge Selector Cards (Bronze / Silver / Gold) -->
-    <div id="tierSelectorContainer" class="grid grid-cols-3 gap-3">
-      <!-- Tier Cards injected via JS -->
+    <div id="tierSelectorContainer" class="grid grid-cols-3 gap-2">
+      <!-- Injected via JS -->
     </div>
 
-    <!-- Custom Tier Setup Form (Only visible when Custom tab active) -->
-    <div id="customControls" class="hidden bg-slate-900/90 border border-slate-800 p-4 rounded-xl text-xs space-y-3">
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <!-- Custom Tier Setup Form -->
+    <div id="customControls" class="hidden bg-[#0b0f19] border border-indigo-900/60 p-3 rounded-xl text-xs space-y-2">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div>
-          <label class="block text-slate-400 mb-1">Rows (5-30)</label>
-          <input type="number" id="custRows" value="10" min="5" max="30" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white font-bold">
+          <label class="block text-indigo-300/80 mb-1">Rows (5-30)</label>
+          <input type="number" id="custRows" value="10" min="5" max="30" class="w-full bg-[#070913] border border-indigo-900 rounded p-1.5 text-white font-bold">
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Cols (5-30)</label>
-          <input type="number" id="custCols" value="10" min="5" max="30" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white font-bold">
+          <label class="block text-indigo-300/80 mb-1">Cols (5-30)</label>
+          <input type="number" id="custCols" value="10" min="5" max="30" class="w-full bg-[#070913] border border-indigo-900 rounded p-1.5 text-white font-bold">
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Mines</label>
-          <input type="number" id="custMines" value="12" min="1" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-white font-bold">
+          <label class="block text-indigo-300/80 mb-1">Mines</label>
+          <input type="number" id="custMines" value="12" min="1" class="w-full bg-[#070913] border border-indigo-900 rounded p-1.5 text-white font-bold">
         </div>
         <div>
-          <label class="block text-slate-400 mb-1">Time Limit (s)</label>
-          <input type="number" id="custTime" value="45" min="5" max="999" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-amber-400 font-bold">
+          <label class="block text-indigo-300/80 mb-1">Time Limit (s)</label>
+          <input type="number" id="custTime" value="45" min="5" max="999" class="w-full bg-[#070913] border border-indigo-900 rounded p-1.5 text-amber-400 font-bold">
         </div>
       </div>
-      <button id="startCustomBtn" class="w-full py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black tracking-wider rounded-lg uppercase shadow">
+      <button id="startCustomBtn" class="w-full py-1.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white font-black tracking-wider rounded-lg uppercase shadow">
         Start Custom Challenge
       </button>
     </div>
   </div>
 
-  <!-- Game Control Bar (Counters + Timer Bar) -->
-  <main class="flex-1 flex flex-col items-center justify-start p-2 max-w-full overflow-hidden">
+  <!-- Game Container & Large 80%+ Viewport -->
+  <main class="flex-1 flex flex-col items-center justify-start p-2 w-full overflow-hidden min-h-0">
     
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-3 mb-3 shadow-md space-y-2">
+    <!-- Counters & Time Bar -->
+    <div class="w-full max-w-lg bg-[#0b0f19] border border-indigo-900/50 rounded-xl p-2.5 mb-2 shadow-lg space-y-2 shrink-0">
       <div class="flex items-center justify-between text-sm font-black">
         <!-- Mine Counter -->
-        <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
-          <span class="text-red-400 text-base">💣</span>
-          <span id="mineCountDisplay" class="font-mono text-lg text-slate-200">000</span>
+        <div class="flex items-center gap-2 bg-[#070913] px-3 py-1 rounded-lg border border-indigo-950">
+          <span class="text-rose-400 text-base">💣</span>
+          <span id="mineCountDisplay" class="font-mono text-lg text-indigo-100">000</span>
         </div>
 
         <!-- Reset / Face Button -->
-        <button id="resetBtn" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xl transition active:scale-95 shadow">
+        <button id="resetBtn" class="px-4 py-1 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 rounded-lg text-xl transition active:scale-95 shadow-md">
           😎
         </button>
 
         <!-- Countdown Timer Display -->
-        <div id="timerContainer" class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+        <div id="timerContainer" class="flex items-center gap-2 bg-[#070913] px-3 py-1 rounded-lg border border-indigo-950">
           <span class="text-amber-400 text-base">⏱️</span>
           <span id="timerDisplay" class="font-mono text-lg text-amber-400 font-bold">00.0</span>
         </div>
       </div>
 
-      <!-- Visual Progress Time Bar -->
-      <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800/80">
-        <div id="timeProgressBar" class="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-red-500 w-full transition-all duration-100 ease-linear"></div>
+      <!-- Time Progress Bar -->
+      <div class="w-full h-2.5 bg-[#070913] rounded-full overflow-hidden border border-indigo-950">
+        <div id="timeProgressBar" class="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 w-full transition-all duration-100 ease-linear"></div>
       </div>
     </div>
 
-    <!-- Scrollable Board Container (Prevents Board Squishing) -->
-    <div id="boardViewport" class="w-full overflow-auto max-h-[60vh] flex justify-start sm:justify-center items-start p-2 border border-slate-900/50 rounded-xl bg-slate-950/40 backdrop-blur-sm">
-      <div id="boardGrid" class="grid gap-1 bg-slate-900 p-2 rounded-xl border border-slate-800/80 shadow-2xl">
+    <!-- Expand Viewport to ~80% Screen Height -->
+    <div id="boardViewport" class="w-full flex-1 flex justify-start sm:justify-center items-start overflow-auto p-2 border border-indigo-950/80 rounded-xl bg-[#03050c]/80 backdrop-blur-md shadow-inner">
+      <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl">
         <!-- Cells generated by JS -->
       </div>
     </div>
@@ -194,25 +195,25 @@
   </main>
 
   <!-- Mobile Floating Dig / Flag Mode Switcher Bar -->
-  <div class="sticky bottom-0 w-full bg-slate-900/95 border-t border-slate-800 p-3 backdrop-blur z-20 flex justify-center">
-    <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner w-full max-w-xs">
-      <button id="modeDigBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-amber-500 text-slate-950 shadow">
+  <div class="sticky bottom-0 w-full bg-[#0b0f19]/95 border-t border-indigo-950 p-2.5 backdrop-blur z-20 flex justify-center shrink-0">
+    <div class="flex bg-[#070913] p-1 rounded-xl border border-indigo-900 shadow-inner w-full max-w-xs">
+      <button id="modeDigBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow">
         <span>⛏️</span> DIG MODE
       </button>
-      <button id="modeFlagBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-slate-400 hover:text-slate-200">
+      <button id="modeFlagBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white">
         <span>🚩</span> FLAG MODE
       </button>
     </div>
   </div>
 
-  <!-- Stats & Progression Modal -->
+  <!-- Stats Modal -->
   <div id="statsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative space-y-4">
-      <button id="closeStatsBtn" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">
+    <div class="bg-[#0b0f19] border border-indigo-900/80 rounded-2xl w-full max-w-md p-5 shadow-2xl relative space-y-4">
+      <button id="closeStatsBtn" class="absolute top-4 right-4 text-indigo-400 hover:text-white p-1">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
 
-      <h2 class="text-xl font-black text-amber-400 flex items-center gap-2">
+      <h2 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-amber-400 flex items-center gap-2">
         <span>🏆</span> Speed Run Medals & Records
       </h2>
 
@@ -230,76 +231,66 @@
         name: 'Beginner',
         rows: 9, cols: 9, mines: 10,
         tiers: {
-          bronze: { id: 'b_bronze', name: 'Bronze', time: 45, icon: '🥉', color: 'border-amber-700 bg-amber-950/30' },
-          silver: { id: 'b_silver', name: 'Silver', time: 30, icon: '🥈', color: 'border-slate-400 bg-slate-800/30' },
-          gold:   { id: 'b_gold',   name: 'Gold',   time: 18, icon: '🥇', color: 'border-yellow-500 bg-yellow-950/30' }
+          bronze: { id: 'b_bronze', name: 'Bronze', time: 45, icon: '🥉', color: 'border-amber-700/60 bg-amber-950/20' },
+          silver: { id: 'b_silver', name: 'Silver', time: 30, icon: '🥈', color: 'border-slate-500/60 bg-slate-900/30' },
+          gold:   { id: 'b_gold',   name: 'Gold',   time: 18, icon: '🥇', color: 'border-yellow-500/60 bg-yellow-950/20' }
         }
       },
       intermediate: {
         name: 'Intermediate',
         rows: 16, cols: 16, mines: 40,
         tiers: {
-          bronze: { id: 'i_bronze', name: 'Bronze', time: 120, icon: '🥉', color: 'border-amber-700 bg-amber-950/30' },
-          silver: { id: 'i_silver', name: 'Silver', time: 80,  icon: '🥈', color: 'border-slate-400 bg-slate-800/30' },
-          gold:   { id: 'i_gold',   name: 'Gold',   time: 50,  icon: '🥇', color: 'border-yellow-500 bg-yellow-950/30' }
+          bronze: { id: 'i_bronze', name: 'Bronze', time: 120, icon: '🥉', color: 'border-amber-700/60 bg-amber-950/20' },
+          silver: { id: 'i_silver', name: 'Silver', time: 80,  icon: '🥈', color: 'border-slate-500/60 bg-slate-900/30' },
+          gold:   { id: 'i_gold',   name: 'Gold',   time: 50,  icon: '🥇', color: 'border-yellow-500/60 bg-yellow-950/20' }
         }
       },
       expert: {
         name: 'Expert',
         rows: 16, cols: 30, mines: 99,
         tiers: {
-          bronze: { id: 'e_bronze', name: 'Bronze', time: 240, icon: '🥉', color: 'border-amber-700 bg-amber-950/30' },
-          silver: { id: 'e_silver', name: 'Silver', time: 160, icon: '🥈', color: 'border-slate-400 bg-slate-800/30' },
-          gold:   { id: 'e_gold',   name: 'Gold',   time: 100, icon: '🥇', color: 'border-yellow-500 bg-yellow-950/30' }
+          bronze: { id: 'e_bronze', name: 'Bronze', time: 240, icon: '🥉', color: 'border-amber-700/60 bg-amber-950/20' },
+          silver: { id: 'e_silver', name: 'Silver', time: 160, icon: '🥈', color: 'border-slate-500/60 bg-slate-900/30' },
+          gold:   { id: 'e_gold',   name: 'Gold',   time: 100, icon: '🥇', color: 'border-yellow-500/60 bg-yellow-950/20' }
         }
       }
     };
 
     /* --- STATE VARIABLES --- */
     let currentDifficulty = 'beginner';
-    let currentTierKey = 'bronze'; // 'bronze', 'silver', 'gold' or 'custom'
+    let currentTierKey = 'bronze';
     let rows = 9, cols = 9, mineCount = 10;
-    let targetTime = 45; // seconds
+    let targetTime = 45;
     let remainingTime = 45;
 
-    let board = []; // { mine, revealed, flagged, count }
-    let gameStatus = 'ready'; // 'ready', 'playing', 'won', 'lost'
+    let board = [];
+    let gameStatus = 'ready';
     let firstClick = true;
     let flagsPlaced = 0;
     let isFlagMode = false;
 
-    // Timer & Audio
     let timerInterval = null;
     let soundEnabled = true;
     let audioCtx = null;
 
-    // Touch Long-Press Handling
     let touchTimer = null;
-    let touchStartX = 0;
-    let touchStartY = 0;
+    let touchStartX = 0, touchStartY = 0;
     let isLongPressTriggered = false;
     const LONG_PRESS_MS = 280;
     const TOUCH_MOVE_THRESHOLD = 10;
 
-    // Local Storage Unlocks & Records
     let speedData = JSON.parse(localStorage.getItem('ms_speed_data')) || {
-      unlocked: {
-        beginner: ['bronze'],
-        intermediate: ['bronze'],
-        expert: ['bronze']
-      },
-      records: {} // e.g. 'b_bronze': bestTime
+      unlocked: { beginner: ['bronze'], intermediate: ['bronze'], expert: ['bronze'] },
+      records: {}
     };
 
     function saveSpeedData() {
       localStorage.setItem('ms_speed_data', JSON.stringify(speedData));
     }
 
-    /* --- SOUND EFFECTS (Web Audio API) --- */
+    /* --- SYNTHESIZED SOUNDS --- */
     function initAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
 
     function playSound(type) {
@@ -311,7 +302,6 @@
       const gain = audioCtx.createGain();
       osc.connect(gain);
       gain.connect(audioCtx.destination);
-
       const now = audioCtx.currentTime;
 
       if (type === 'dig') {
@@ -320,45 +310,39 @@
         osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
         gain.gain.setValueAtTime(0.15, now);
         gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
-        osc.start(now);
-        osc.stop(now + 0.05);
+        osc.start(now); osc.stop(now + 0.05);
       } else if (type === 'flag') {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(600, now);
         osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
         gain.gain.setValueAtTime(0.2, now);
         gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
-        osc.start(now);
-        osc.stop(now + 0.08);
+        osc.start(now); osc.stop(now + 0.08);
       } else if (type === 'explode') {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(150, now);
         osc.frequency.exponentialRampToValueAtTime(30, now + 0.3);
         gain.gain.setValueAtTime(0.3, now);
         gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
-        osc.start(now);
-        osc.stop(now + 0.3);
+        osc.start(now); osc.stop(now + 0.3);
       } else if (type === 'win') {
         const notes = [523.25, 659.25, 783.99, 1046.50];
         notes.forEach((freq, idx) => {
-          const noteOsc = audioCtx.createOscillator();
-          const noteGain = audioCtx.createGain();
-          noteOsc.connect(noteGain);
-          noteGain.connect(audioCtx.destination);
-          noteOsc.type = 'sine';
-          noteOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
-          noteGain.gain.setValueAtTime(0.2, now + idx * 0.08);
-          noteGain.gain.linearRampToValueAtTime(0.01, now + idx * 0.08 + 0.2);
-          noteOsc.start(now + idx * 0.08);
-          noteOsc.stop(now + idx * 0.08 + 0.2);
+          const nOsc = audioCtx.createOscillator();
+          const nGain = audioCtx.createGain();
+          nOsc.connect(nGain); nGain.connect(audioCtx.destination);
+          nOsc.type = 'sine';
+          nOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          nGain.gain.setValueAtTime(0.2, now + idx * 0.08);
+          nGain.gain.linearRampToValueAtTime(0.01, now + idx * 0.08 + 0.2);
+          nOsc.start(now + idx * 0.08); nOsc.stop(now + idx * 0.08 + 0.2);
         });
       } else if (type === 'tick') {
         osc.type = 'square';
         osc.frequency.setValueAtTime(800, now);
         gain.gain.setValueAtTime(0.05, now);
         gain.gain.linearRampToValueAtTime(0.01, now + 0.02);
-        osc.start(now);
-        osc.stop(now + 0.02);
+        osc.start(now); osc.stop(now + 0.02);
       }
     }
 
@@ -371,8 +355,6 @@
     const modeDigBtn = document.getElementById('modeDigBtn');
     const modeFlagBtn = document.getElementById('modeFlagBtn');
     const soundBtn = document.getElementById('soundBtn');
-    const soundOnIcon = document.getElementById('soundOnIcon');
-    const soundOffIcon = document.getElementById('soundOffIcon');
     const tierSelectorContainer = document.getElementById('tierSelectorContainer');
     const customControls = document.getElementById('customControls');
     const statsBtn = document.getElementById('statsBtn');
@@ -380,7 +362,7 @@
     const closeStatsBtn = document.getElementById('closeStatsBtn');
     const modalRecordsList = document.getElementById('modalRecordsList');
 
-    /* --- INIT & SELECTION DASHBOARD --- */
+    /* --- DASHBOARD & SETUP --- */
     function renderTierSelector() {
       tierSelectorContainer.innerHTML = '';
       if (currentDifficulty === 'custom') {
@@ -402,20 +384,20 @@
         const bestTime = speedData.records[tier.id];
 
         const card = document.createElement('button');
-        card.className = `p-3 rounded-xl border text-left transition flex flex-col justify-between relative overflow-hidden ${tier.color} ${
-          isSelected ? 'ring-2 ring-amber-400 scale-[1.02]' : 'opacity-90 hover:opacity-100'
-        } ${!isUnlocked ? 'opacity-50 grayscale cursor-not-allowed' : ''}`;
+        card.className = `p-2.5 rounded-xl border text-left transition flex flex-col justify-between relative overflow-hidden ${tier.color} ${
+          isSelected ? 'ring-2 ring-fuchsia-400 border-fuchsia-400 scale-[1.02]' : 'opacity-85 hover:opacity-100'
+        } ${!isUnlocked ? 'opacity-40 grayscale cursor-not-allowed' : ''}`;
 
         card.innerHTML = `
-          <div class="flex items-center justify-between w-full mb-1">
-            <span class="text-xl">${tier.icon}</span>
+          <div class="flex items-center justify-between w-full mb-0.5">
+            <span class="text-lg">${tier.icon}</span>
             <span class="font-mono text-xs font-bold text-amber-400">${tier.time}s</span>
           </div>
           <div>
-            <div class="font-black text-xs uppercase tracking-wider text-slate-200">${tier.name}</div>
-            <div class="text-[10px] text-slate-400 font-medium">${bestTime ? 'Best: ' + bestTime.toFixed(1) + 's' : (isUnlocked ? 'Not beaten' : 'Locked')}</div>
+            <div class="font-black text-[11px] uppercase tracking-wider text-indigo-100">${tier.name}</div>
+            <div class="text-[10px] text-indigo-300/70 font-medium">${bestTime ? 'Best: ' + bestTime.toFixed(1) + 's' : (isUnlocked ? 'Not beaten' : 'Locked')}</div>
           </div>
-          ${!isUnlocked ? `<div class="absolute inset-0 bg-slate-950/70 flex items-center justify-center font-bold text-xs text-slate-400">🔒 Locked</div>` : ''}
+          ${!isUnlocked ? `<div class="absolute inset-0 bg-[#070913]/80 backdrop-blur-[1px] flex items-center justify-center font-bold text-xs text-indigo-300">🔒 Locked</div>` : ''}
         `;
 
         if (isUnlocked) {
@@ -447,15 +429,14 @@
       remainingTime = targetTime;
     }
 
-    // Tab Switching
     document.querySelectorAll('.diff-tab').forEach(tab => {
       tab.onclick = () => {
         document.querySelectorAll('.diff-tab').forEach(t => {
-          t.classList.remove('bg-amber-500', 'text-slate-950');
-          t.classList.add('text-slate-400');
+          t.classList.remove('bg-gradient-to-r', 'from-fuchsia-600', 'to-pink-600', 'text-white');
+          t.classList.add('text-indigo-300');
         });
-        tab.classList.add('bg-amber-500', 'text-slate-950');
-        tab.classList.remove('text-slate-400');
+        tab.classList.add('bg-gradient-to-r', 'from-fuchsia-600', 'to-pink-600', 'text-white');
+        tab.classList.remove('text-indigo-300');
 
         currentDifficulty = tab.dataset.diff;
         currentTierKey = 'bronze';
@@ -470,7 +451,7 @@
       resetGame();
     };
 
-    /* --- GAME LOGIC & BOARD CREATION --- */
+    /* --- BOARD GENERATION & ENGINE --- */
     function resetGame() {
       clearInterval(timerInterval);
       gameStatus = 'ready';
@@ -482,9 +463,8 @@
       resetBtn.innerText = '😎';
       timerDisplay.innerText = remainingTime.toFixed(1);
       timeProgressBar.style.width = '100%';
-      timeProgressBar.className = "h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-red-500 w-full transition-all duration-100 ease-linear";
+      timeProgressBar.className = "h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 w-full transition-all duration-100 ease-linear";
 
-      // Build initial empty board structure
       board = [];
       for (let r = 0; r < rows; r++) {
         const row = [];
@@ -507,7 +487,6 @@
           cellEl.id = `cell-${r}-${c}`;
           cellEl.className = 'ms-cell ms-unrevealed rounded-lg flex items-center justify-center';
           
-          // Event Listeners for Touch and Click
           cellEl.addEventListener('touchstart', (e) => handleTouchStart(e, r, c), { passive: false });
           cellEl.addEventListener('touchmove', (e) => handleTouchMove(e), { passive: true });
           cellEl.addEventListener('touchend', (e) => handleTouchEnd(e, r, c));
@@ -522,7 +501,6 @@
       }
     }
 
-    /* First-tap mine generation with safe 3x3 zone */
     function generateMines(safeR, safeC) {
       let placed = 0;
       const totalCells = rows * cols;
@@ -532,7 +510,6 @@
         const r = Math.floor(Math.random() * rows);
         const c = Math.floor(Math.random() * cols);
 
-        // Keep 3x3 surrounding safe zone
         if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
 
         if (!board[r][c].mine) {
@@ -541,7 +518,6 @@
         }
       }
 
-      // Calculate neighbor counts
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           if (board[r][c].mine) continue;
@@ -559,15 +535,13 @@
       }
     }
 
-    /* --- CELL ACTIONS --- */
+    /* --- INTERACTIONS --- */
     function handleCellClick(r, c) {
       if (gameStatus === 'won' || gameStatus === 'lost') return;
-
       if (isFlagMode) {
         toggleFlag(r, c);
         return;
       }
-
       digCell(r, c);
     }
 
@@ -605,7 +579,6 @@
       if (cell.count === 0) {
         el.classList.add('ms-revealed-zero');
         el.innerHTML = '';
-        // Cascade empty cells
         for (let dr = -1; dr <= 1; dr++) {
           for (let dc = -1; dc <= 1; dc++) {
             if (dr !== 0 || dc !== 0) revealCell(r + dr, c + dc);
@@ -635,7 +608,6 @@
       updateCounters();
     }
 
-    /* --- TOUCH LONG PRESS HANDLING --- */
     function handleTouchStart(e, r, c) {
       initAudio();
       touchStartX = e.touches[0].clientX;
@@ -671,13 +643,10 @@
         touchTimer = null;
       }
       document.querySelectorAll('.ms-pressing').forEach(el => el.classList.remove('ms-pressing'));
-
-      if (isLongPressTriggered) {
-        e.preventDefault(); // Prevent ghost click
-      }
+      if (isLongPressTriggered) e.preventDefault();
     }
 
-    /* --- TIMER & GAME OVER --- */
+    /* --- COUNTDOWN & ENDGAME --- */
     function startCountdown() {
       gameStatus = 'playing';
       const startTime = Date.now();
@@ -689,18 +658,16 @@
         
         timerDisplay.innerText = remainingTime.toFixed(1);
 
-        // Progress bar percentage
         const pct = (remainingTime / targetTime) * 100;
         timeProgressBar.style.width = `${pct}%`;
 
-        // Warning sounds & pulse
         if (remainingTime <= 5 && remainingTime > 0) {
           timerDisplay.classList.add('animate-pulse-danger');
           if (Math.floor(remainingTime * 10) % 10 === 0) playSound('tick');
         }
 
         if (remainingTime <= 0) {
-          gameOver(false, true); // Timeout loss
+          gameOver(false, true);
         }
       }, 100);
     }
@@ -709,15 +676,10 @@
       let unrevealedNonMines = 0;
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          if (!board[r][c].mine && !board[r][c].revealed) {
-            unrevealedNonMines++;
-          }
+          if (!board[r][c].mine && !board[r][c].revealed) unrevealedNonMines++;
         }
       }
-
-      if (unrevealedNonMines === 0) {
-        gameOver(true);
-      }
+      if (unrevealedNonMines === 0) gameOver(true);
     }
 
     function gameOver(isWin, isTimeout = false) {
@@ -731,18 +693,15 @@
 
         const timeTaken = targetTime - remainingTime;
 
-        // Save Records & Unlocks
         if (currentDifficulty !== 'custom') {
           const preset = PRESETS[currentDifficulty];
           const tierObj = preset.tiers[currentTierKey];
           
-          // Save Best Time
           const prevRecord = speedData.records[tierObj.id];
           if (!prevRecord || timeTaken < prevRecord) {
             speedData.records[tierObj.id] = timeTaken;
           }
 
-          // Unlock Next Tier
           if (currentTierKey === 'bronze' && !speedData.unlocked[currentDifficulty].includes('silver')) {
             speedData.unlocked[currentDifficulty].push('silver');
           } else if (currentTierKey === 'silver' && !speedData.unlocked[currentDifficulty].includes('gold')) {
@@ -760,14 +719,13 @@
         resetBtn.innerText = isTimeout ? '⏰💥' : '😵';
         playSound('explode');
 
-        // Reveal all mines
         for (let r = 0; r < rows; r++) {
           for (let c = 0; c < cols; c++) {
             const cell = board[r][c];
             const el = document.getElementById(`cell-${r}-${c}`);
             if (cell.mine && el) {
               el.classList.remove('ms-unrevealed');
-              el.classList.add('bg-red-900/80', 'border-red-600');
+              el.classList.add('bg-rose-950/90', 'border-rose-600');
               el.innerText = '💣';
             }
           }
@@ -784,37 +742,36 @@
       mineCountDisplay.innerText = String(remainingMines).padStart(3, '0');
     }
 
-    /* --- MODE & CONTROLS BINDING --- */
+    /* --- CONTROLS & MODALS --- */
     modeDigBtn.onclick = () => {
       isFlagMode = false;
-      modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-amber-500 text-slate-950 shadow";
-      modeFlagBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-slate-400 hover:text-slate-200";
+      modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow";
+      modeFlagBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white";
     };
 
     modeFlagBtn.onclick = () => {
       isFlagMode = true;
-      modeFlagBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-amber-500 text-slate-950 shadow";
-      modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-slate-400 hover:text-slate-200";
+      modeFlagBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow";
+      modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white";
     };
 
     resetBtn.onclick = resetGame;
 
     soundBtn.onclick = () => {
       soundEnabled = !soundEnabled;
-      soundOnIcon.classList.toggle('hidden', !soundEnabled);
-      soundOffIcon.classList.toggle('hidden', soundEnabled);
+      document.getElementById('soundOnIcon').classList.toggle('hidden', !soundEnabled);
+      document.getElementById('soundOffIcon').classList.toggle('hidden', soundEnabled);
     };
 
-    // Stats Modal
     statsBtn.onclick = () => {
       modalRecordsList.innerHTML = '';
 
       Object.keys(PRESETS).forEach(dKey => {
         const p = PRESETS[dKey];
         const section = document.createElement('div');
-        section.className = 'bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2';
+        section.className = 'bg-[#070913] p-3 rounded-xl border border-indigo-950 space-y-2';
         
-        let html = `<div class="font-bold text-sm text-slate-200 border-b border-slate-800 pb-1">${p.name} Records</div>`;
+        let html = `<div class="font-bold text-sm text-indigo-200 border-b border-indigo-950 pb-1">${p.name} Records</div>`;
         ['bronze', 'silver', 'gold'].forEach(tKey => {
           const t = p.tiers[tKey];
           const rec = speedData.records[t.id];
@@ -822,10 +779,10 @@
 
           html += `
             <div class="flex items-center justify-between text-xs">
-              <span class="flex items-center gap-1.5 font-medium text-slate-300">
+              <span class="flex items-center gap-1.5 font-medium text-indigo-300/80">
                 <span>${t.icon}</span> ${t.name} (Limit: ${t.time}s)
               </span>
-              <span class="font-mono font-bold ${rec ? 'text-amber-400' : 'text-slate-500'}">
+              <span class="font-mono font-bold ${rec ? 'text-amber-400' : 'text-slate-600'}">
                 ${rec ? rec.toFixed(2) + 's' : (isUnlocked ? 'Not beaten' : 'Locked')}
               </span>
             </div>
@@ -841,7 +798,7 @@
 
     closeStatsBtn.onclick = () => statsModal.classList.add('hidden');
 
-    // Initial Launch
+    // Launch initial tab
     document.querySelector('.diff-tab[data-diff="beginner"]').click();
   </script>
 </body>
