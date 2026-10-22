@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full select-none">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Minesweeper - Clean & Mobile Friendly</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        retro: {
+                            bg: '#121214',
+                            panel: '#1e1e24',
+                            accent: '#3b82f6',
+                            mine: '#ef4444',
+                            flag: '#f59e0b',
+                            cell: '#2a2a35',
+                            cellHover: '#383846',
+                            cellRevealed: '#181820'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Touch prevent default selections */
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.4);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.7);
+        }
+
+        /* LED Digital display styling */
+        .digital-font {
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 2px;
+            text-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+        }
+
+        /* Number color scheme */
+        .num-1 { color: #60a5fa; }
+        .num-2 { color: #4ade80; }
+        .num-3 { color: #f87171; }
+        .num-4 { color: #c084fc; }
+        .num-5 { color: #fbbf24; }
+        .num-6 { color: #38bdf8; }
+        .num-7 { color: #f472b6; }
+        .num-8 { color: #9ca3af; }
+
+        /* Animation effects */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pop-in {
+            animation: popIn 0.15s ease-out forwards;
+        }
+
+        /* Pulsing flag icon in Flag mode */
+        @keyframes modePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .mode-active {
+            animation: modePulse 1.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 h-full flex flex-col font-sans transition-colors duration-200 overflow-x-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="w-full bg-slate-800/80 backdrop-blur border-b border-slate-700/60 px-4 py-3 sticky top-0 z-30">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <!-- App Logo / Title -->
+            <div class="flex items-center space-x-2">
+                <div class="bg-red-500/20 text-red-500 p-2 rounded-lg border border-red-500/30">
+                    <i class="fa-solid fa-land-mine-on text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide">MINESWEEPER</h1>
+                    <p class="text-xs text-slate-400">Ad-Free • Touch-Optimized</p>
+                </div>
+            </div>
+
+            <!-- Header Action Controls -->
+            <div class="flex items-center space-x-2">
+                <button id="btn-stats" class="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors" title="High Scores & Stats">
+                    <i class="fa-solid fa-trophy"></i>
+                </button>
+                <button id="btn-settings" class="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors" title="Settings">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+                <button id="btn-theme" class="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors" title="Toggle Theme">
+                    <i class="fa-solid fa-moon" id="theme-icon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col items-center justify-start p-2 sm:p-4 max-w-5xl mx-auto w-full">
+
+        <!-- Preset / Mode Selection Ribbon -->
+        <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-3 bg-slate-800/50 p-2 rounded-xl border border-slate-700/50">
+            <div class="flex items-center gap-1 sm:gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                <button data-diff="beginner" class="btn-diff px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-sm transition-all whitespace-nowrap">
+                    Beginner (9x9)
+                </button>
+                <button data-diff="intermediate" class="btn-diff px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all whitespace-nowrap">
+                    Intermediate (16x16)
+                </button>
+                <button data-diff="expert" class="btn-diff px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all whitespace-nowrap">
+                    Expert (16x30)
+                </button>
+                <button data-diff="custom" class="btn-diff px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 transition-all whitespace-nowrap">
+                    Custom
+                </button>
+            </div>
+
+            <!-- Quick Reset Button -->
+            <button id="btn-reset" class="hidden sm:flex items-center space-x-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>New Game</span>
+            </button>
+        </div>
+
+        <!-- Dashboard Display Bar (Counters & Face Button) -->
+        <div class="w-full max-w-md bg-slate-800 rounded-t-xl border border-slate-700 p-3 flex items-center justify-between shadow-lg">
+            <!-- Mine Counter -->
+            <div class="flex items-center bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 space-x-2">
+                <i class="fa-solid fa-flag text-amber-500 text-sm"></i>
+                <span id="mine-count" class="digital-font text-red-500 text-xl font-bold w-12 text-right">010</span>
+            </div>
+
+            <!-- Status Face / New Game Button -->
+            <button id="btn-face" class="w-11 h-11 rounded-full bg-slate-700 border-2 border-slate-600 flex items-center justify-center text-2xl hover:scale-105 active:scale-95 transition-transform shadow-inner">
+                <span id="face-icon">😊</span>
+            </button>
+
+            <!-- Timer Display -->
+            <div class="flex items-center bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 space-x-2">
+                <i class="fa-solid fa-stopwatch text-blue-400 text-sm"></i>
+                <span id="timer-count" class="digital-font text-red-500 text-xl font-bold w-12 text-right">000</span>
+            </div>
+        </div>
+
+        <!-- Scrollable Board Container (Handles Large Grids on Small Screens) -->
+        <div id="board-container" class="w-full max-w-md bg-slate-950 rounded-b-xl border-x border-b border-slate-700 p-2 sm:p-4 overflow-auto flex items-start justify-center min-h-[300px] max-h-[65vh] shadow-xl relative">
+            <div id="minesweeper-board" class="grid gap-1 touch-none"></div>
+        </div>
+
+        <!-- Mobile Floating Control Toggle Bar -->
+        <div class="mt-4 flex items-center justify-center space-x-3 w-full max-w-xs">
+            <button id="btn-mode-dig" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center space-x-2 border-2 border-blue-500 bg-blue-600 text-white shadow-lg transition-all">
+                <i class="fa-solid fa-shovel text-base"></i>
+                <span>DIG MODE</span>
+            </button>
+            <button id="btn-mode-flag" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center space-x-2 border-2 border-slate-700 bg-slate-800 text-slate-400 shadow-lg transition-all">
+                <i class="fa-solid fa-flag text-base"></i>
+                <span>FLAG MODE</span>
+            </button>
+        </div>
+        <p class="text-xs text-slate-400 mt-2 text-center">
+            Tip: Long-press any cell to quickly flag. Tap revealed numbers for quick-reveal (chording).
+        </p>
+    </main>
+
+    <!-- Custom Difficulty Modal -->
+    <div id="modal-custom" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-xs shadow-2xl pop-in">
+            <h3 class="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-blue-400"></i> Custom Game Setup
+            </h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Rows (5 - 30)</label>
+                    <input type="number" id="custom-rows" value="12" min="5" max="30" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100 focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Columns (5 - 30)</label>
+                    <input type="number" id="custom-cols" value="12" min="5" max="30" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100 focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Mines</label>
+                    <input type="number" id="custom-mines" value="20" min="1" max="300" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-100 focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button id="btn-custom-cancel" class="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 text-xs font-semibold hover:bg-slate-600 transition-colors">Cancel</button>
+                <button id="btn-custom-apply" class="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-500 transition-colors">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="modal-stats" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl pop-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-amber-400"></i> Best Times & Stats
+                </h3>
+                <button id="btn-stats-close" class="text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-3">
+                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700/50 flex justify-between items-center">
+                    <span class="text-sm font-medium text-slate-300">Beginner Best</span>
+                    <span id="stat-beginner" class="font-mono text-amber-400 font-bold">--:--</span>
+                </div>
+                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700/50 flex justify-between items-center">
+                    <span class="text-sm font-medium text-slate-300">Intermediate Best</span>
+                    <span id="stat-intermediate" class="font-mono text-amber-400 font-bold">--:--</span>
+                </div>
+                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700/50 flex justify-between items-center">
+                    <span class="text-sm font-medium text-slate-300">Expert Best</span>
+                    <span id="stat-expert" class="font-mono text-amber-400 font-bold">--:--</span>
+                </div>
+            </div>
+
+            <button id="btn-clear-stats" class="w-full mt-5 py-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 text-xs font-semibold hover:bg-red-500/20 transition-colors">
+                Reset All Statistics
+            </button>
+        </div>
+    </div>
+
+    <!-- Game End Overlay Modal (Win/Loss) -->
+    <div id="modal-gameover" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl pop-in">
+            <div id="gameover-icon" class="text-5xl mb-3">🎉</div>
+            <h2 id="gameover-title" class="text-2xl font-bold text-slate-100 mb-1">VICTORY!</h2>
+            <p id="gameover-message" class="text-sm text-slate-400 mb-4">You cleared all mines in 42 seconds!</p>
+            
+            <button id="btn-play-again" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg transition-all">
+                Play Again
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Logic Script -->
+    <script>
+        // Game Configuration Presets
+        const PRESETS = {
+            beginner: { rows: 9, cols: 9, mines: 10 },
+            intermediate: { rows: 16, cols: 16, mines: 40 },
+            expert: { rows: 16, cols: 30, mines: 99 },
+            custom: { rows: 12, cols: 12, mines: 20 }
+        };
+
+        // Application State Variables
+        let currentDifficulty = 'beginner';
+        let config = { ...PRESETS.beginner };
+        let board = []; // 2D array storing cell objects
+        let isFirstClick = true;
+        let isGameOver = false;
+        let activeMode = 'dig'; // 'dig' or 'flag'
+        let timer = 0;
+        let timerInterval = null;
+        let flagsPlaced = 0;
+        let cellsRevealed = 0;
+        let hapticsEnabled = true;
+
+        // Long press handling variables
+        let longPressTimer = null;
+        const LONG_PRESS_DURATION = 350; // ms
+
+        // DOM Elements
+        const boardEl = document.getElementById('minesweeper-board');
+        const boardContainer = document.getElementById('board-container');
+        const mineCountEl = document.getElementById('mine-count');
+        const timerCountEl = document.getElementById('timer-count');
+        const faceIconEl = document.getElementById('face-icon');
+        const btnFace = document.getElementById('btn-face');
+        const btnReset = document.getElementById('btn-reset');
+        const btnModeDig = document.getElementById('btn-mode-dig');
+        const btnModeFlag = document.getElementById('btn-mode-flag');
+        const modalGameOver = document.getElementById('modal-gameover');
+        const modalCustom = document.getElementById('modal-custom');
+        const modalStats = document.getElementById('modal-stats');
+
+        // Initializer
+        window.onload = function() {
+            setupEventListeners();
+            loadStats();
+            startNewGame();
+        };
+
+        // Trigger vibration if API is available and user enabled
+        function triggerHaptic(pattern = 30) {
+            if (hapticsEnabled && 'vibrate' in navigator) {
+                try {
+                    navigator.vibrate(pattern);
+                } catch (e) {
+                    // Ignore browsers that block vibration
+                }
+            }
+        }
+
+        // Setup Event Listeners for UI
+        function setupEventListeners() {
+            // Preset Button Listeners
+            document.querySelectorAll('.btn-diff').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const diff = e.currentTarget.dataset.diff;
+                    setDifficulty(diff);
+                });
+            });
+
+            // Reset Buttons
+            btnFace.addEventListener('click', () => startNewGame());
+            btnReset.addEventListener('click', () => startNewGame());
+            document.getElementById('btn-play-again').addEventListener('click', () => {
+                modalGameOver.classList.add('hidden');
+                startNewGame();
+            });
+
+            // Mode Switching
+            btnModeDig.addEventListener('click', () => setTouchMode('dig'));
+            btnModeFlag.addEventListener('click', () => setTouchMode('flag'));
+
+            // Custom Setup Modal
+            document.getElementById('btn-custom-cancel').addEventListener('click', () => {
+                modalCustom.classList.add('hidden');
+            });
+            document.getElementById('btn-custom-apply').addEventListener('click', applyCustomDifficulty);
+
+            // Stats Modal
+            document.getElementById('btn-stats').addEventListener('click', showStatsModal);
+            document.getElementById('btn-stats-close').addEventListener('click', () => modalStats.classList.add('hidden'));
+            document.getElementById('btn-clear-stats').addEventListener('click', clearStats);
+
+            // Dark/Light Theme Switcher Placeholder
+            document.getElementById('btn-theme').addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+            });
+        }
+
+        // Change Active Difficulty
+        function setDifficulty(diff) {
+            document.querySelectorAll('.btn-diff').forEach(btn => {
+                if (btn.dataset.diff === diff) {
+                    btn.classList.replace('bg-slate-700', 'bg-blue-600');
+                    btn.classList.replace('text-slate-300', 'text-white');
+                } else {
+                    btn.classList.replace('bg-blue-600', 'bg-slate-700');
+                    btn.classList.replace('text-white', 'text-slate-300');
+                }
+            });
+
+            currentDifficulty = diff;
+            if (diff === 'custom') {
+                modalCustom.classList.remove('hidden');
+            } else {
+                config = { ...PRESETS[diff] };
+                startNewGame();
+            }
+        }
+
+        // Apply Custom Grid Settings
+        function applyCustomDifficulty() {
+            const rows = parseInt(document.getElementById('custom-rows').value) || 10;
+            const cols = parseInt(document.getElementById('custom-cols').value) || 10;
+            const maxMines = Math.floor(rows * cols * 0.8);
+            let mines = parseInt(document.getElementById('custom-mines').value) || 10;
+            mines = Math.min(Math.max(1, mines), maxMines);
+
+            config = {
+                rows: Math.min(Math.max(5, rows), 30),
+                cols: Math.min(Math.max(5, cols), 30),
+                mines: mines
+            };
+
+            PRESETS.custom = { ...config };
+            modalCustom.classList.add('hidden');
+            startNewGame();
+        }
+
+        // Toggle mobile mode (Dig / Flag)
+        function setTouchMode(mode) {
+            activeMode = mode;
+            if (mode === 'dig') {
+                btnModeDig.className = "flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center space-x-2 border-2 border-blue-500 bg-blue-600 text-white shadow-lg transition-all";
+                btnModeFlag.className = "flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center space-x-2 border-2 border-slate-700 bg-slate-800 text-slate-400 shadow-lg transition-all";
+            } else {
+                btnModeFlag.className = "flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center space-x-2 border-2 border-amber-500 bg-amber-600 text-white shadow-lg transition-all";
+                btnModeDig.className = "flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center space-x-2 border-2 border-slate-700 bg-slate-800 text-slate-400 shadow-lg transition-all";
+            }
+        }
+
+        // Reset Game & Start New Session
+        function startNewGame() {
+            clearInterval(timerInterval);
+            timer = 0;
+            flagsPlaced = 0;
+            cellsRevealed = 0;
+            isFirstClick = true;
+            isGameOver = false;
+
+            updateTimerDisplay();
+            updateMineDisplay();
+            faceIconEl.textContent = '😊';
+
+            // Auto adapt board container scroll & scale
+            if (config.cols > 16) {
+                boardContainer.classList.remove('max-w-md');
+                boardContainer.classList.add('max-w-full');
+            } else {
+                boardContainer.classList.remove('max-w-full');
+                boardContainer.classList.add('max-w-md');
+            }
+
+            createBoardData();
+            renderBoard();
+        }
+
+        // Initialize Internal Data Grid
+        function createBoardData() {
+            board = [];
+            for (let r = 0; r < config.rows; r++) {
+                const row = [];
+                for (let c = 0; c < config.cols; c++) {
+                    row.push({
+                        r: r,
+                        c: c,
+                        isMine: false,
+                        isRevealed: false,
+                        isFlagged: false,
+                        neighborMines: 0
+                    });
+                }
+                board.push(row);
+            }
+        }
+
+        // Render Board Elements to DOM
+        function renderBoard() {
+            boardEl.innerHTML = '';
+            boardEl.style.gridTemplateColumns = `repeat(${config.cols}, minmax(0, 1fr))`;
+
+            // Adjust cell size dynamically based on columns
+            let cellSizeClass = 'w-9 h-9 text-base';
+            if (config.cols > 20) {
+                cellSizeClass = 'w-7 h-7 text-xs';
+            } else if (config.cols > 12) {
+                cellSizeClass = 'w-8 h-8 text-sm';
+            }
+
+            for (let r = 0; r < config.rows; r++) {
+                for (let c = 0; c < config.cols; c++) {
+                    const cell = board[r][c];
+                    const cellEl = document.createElement('button');
+                    cellEl.id = `cell-${r}-${c}`;
+                    cellEl.className = `${cellSizeClass} rounded-md bg-slate-800 border border-slate-700/80 flex items-center justify-center font-bold transition-all duration-100 select-none active:scale-95 shadow-sm hover:bg-slate-700`;
+
+                    // Attach Touch & Mouse Event Handlers
+                    attachCellEvents(cellEl, cell);
+
+                    boardEl.appendChild(cellEl);
+                }
+            }
+        }
+
+        // Cell Interaction Logic (Mouse + Touch)
+        function attachCellEvents(el, cell) {
+            // Handle context menu (Right click)
+            el.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (isGameOver) return;
+                toggleFlag(cell);
+            });
+
+            // Touch support with long-press detection
+            let isLongPress = false;
+
+            el.addEventListener('touchstart', (e) => {
+                if (isGameOver) return;
+                isLongPress = false;
+                longPressTimer = setTimeout(() => {
+                    isLongPress = true;
+                    triggerHaptic(50);
+                    toggleFlag(cell);
+                }, LONG_PRESS_DURATION);
+            }, { passive: true });
+
+            el.addEventListener('touchend', (e) => {
+                clearTimeout(longPressTimer);
+            });
+
+            el.addEventListener('touchmove', () => {
+                clearTimeout(longPressTimer);
+            });
+
+            // Click Handler
+            el.addEventListener('click', (e) => {
+                if (isGameOver || isLongPress) return;
+
+                if (cell.isRevealed) {
+                    // Quick Reveal / Chording
+                    chordCell(cell);
+                    return;
+                }
+
+                if (activeMode === 'flag') {
+                    toggleFlag(cell);
+                } else {
+                    handleDig(cell);
+                }
+            });
+        }
+
+        // Handle Cell Dig Operation
+        function handleDig(cell) {
+            if (cell.isFlagged || cell.isRevealed) return;
+
+            if (isFirstClick) {
+                isFirstClick = false;
+                startTimer();
+                generateMines(cell.r, cell.c);
+            }
+
+            if (cell.isMine) {
+                detonateMine(cell);
+                return;
+            }
+
+            revealCell(cell);
+            checkWinCondition();
+        }
+
+        // First-click safe Mine Generator
+        function generateMines(safeR, safeC) {
+            let minesToPlace = config.mines;
+            while (minesToPlace > 0) {
+                const r = Math.floor(Math.random() * config.rows);
+                const c = Math.floor(Math.random() * config.cols);
+
+                // Keep clear of first clicked cell and its adjacent neighbors
+                const isSafeZone = Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1;
+
+                if (!board[r][c].isMine && !isSafeZone) {
+                    board[r][c].isMine = true;
+                    minesToPlace--;
+                }
+            }
+
+            // Compute adjacent mine counts
+            for (let r = 0; r < config.rows; r++) {
+                for (let c = 0; c < config.cols; c++) {
+                    if (!board[r][c].isMine) {
+                        board[r][c].neighborMines = countNeighborMines(r, c);
+                    }
+                }
+            }
+        }
+
+        // Count mines around target cell
+        function countNeighborMines(r, c) {
+            let count = 0;
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols) {
+                        if (board[nr][nc].isMine) count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        // Flood Fill / Reveal Algorithm
+        function revealCell(cell) {
+            if (cell.isRevealed || cell.isFlagged) return;
+
+            cell.isRevealed = true;
+            cellsRevealed++;
+
+            const el = document.getElementById(`cell-${cell.r}-${cell.c}`);
+            el.className = el.className.replace('bg-slate-800 hover:bg-slate-700', 'bg-slate-900 border-slate-800/50');
+
+            if (cell.neighborMines > 0) {
+                el.textContent = cell.neighborMines;
+                el.classList.add(`num-${cell.neighborMines}`);
+            } else {
+                // If 0 neighboring mines, automatically reveal surrounding cells
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        const nr = cell.r + dr;
+                        const nc = cell.c + dc;
+                        if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols) {
+                            const neighbor = board[nr][nc];
+                            if (!neighbor.isRevealed) {
+                                revealCell(neighbor);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Toggle Cell Flag
+        function toggleFlag(cell) {
+            if (cell.isRevealed) return;
+
+            cell.isFlagged = !cell.isFlagged;
+            flagsPlaced += cell.isFlagged ? 1 : -1;
+
+            const el = document.getElementById(`cell-${cell.r}-${cell.c}`);
+            if (cell.isFlagged) {
+                el.innerHTML = '<i class="fa-solid fa-flag text-amber-500 pop-in"></i>';
+                triggerHaptic(20);
+            } else {
+                el.innerHTML = '';
+            }
+
+            updateMineDisplay();
+        }
+
+        // Chording (Clicking on revealed number with surrounding flags)
+        function chordCell(cell) {
+            if (!cell.isRevealed || cell.neighborMines === 0) return;
+
+            let flaggedCount = 0;
+            const neighbors = [];
+
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    const nr = cell.r + dr;
+                    const nc = cell.c + dc;
+                    if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols) {
+                        const neighbor = board[nr][nc];
+                        neighbors.push(neighbor);
+                        if (neighbor.isFlagged) flaggedCount++;
+                    }
+                }
+            }
+
+            if (flaggedCount === cell.neighborMines) {
+                neighbors.forEach(n => {
+                    if (!n.isFlagged && !n.isRevealed) {
+                        handleDig(n);
+                    }
+                });
+            }
+        }
+
+        // Trigger Mine Detonation Game Over
+        function detonateMine(hitCell) {
+            isGameOver = true;
+            clearInterval(timerInterval);
+            faceIconEl.textContent = '😵';
+            triggerHaptic([100, 50, 100]);
+
+            // Reveal all mines
+            for (let r = 0; r < config.rows; r++) {
+                for (let c = 0; c < config.cols; c++) {
+                    const cell = board[r][c];
+                    const el = document.getElementById(`cell-${r}-${c}`);
+
+                    if (cell.isMine) {
+                        el.innerHTML = '<i class="fa-solid fa-land-mine-on text-red-500 text-sm"></i>';
+                        if (cell === hitCell) {
+                            el.classList.add('bg-red-900/80', 'border-red-600');
+                        }
+                    } else if (cell.isFlagged) {
+                        // Incorrect flag placement mark
+                        el.innerHTML = '<i class="fa-solid fa-xmark text-slate-400"></i>';
+                    }
+                }
+            }
+
+            setTimeout(() => {
+                showGameOverModal(false);
+            }, 600);
+        }
+
+        // Check if player won
+        function checkWinCondition() {
+            const totalCells = config.rows * config.cols;
+            if (cellsRevealed === totalCells - config.mines) {
+                isGameOver = true;
+                clearInterval(timerInterval);
+                faceIconEl.textContent = '😎';
+                triggerHaptic([50, 100, 150]);
+
+                // Automatically flag remaining mines
+                for (let r = 0; r < config.rows; r++) {
+                    for (let c = 0; c < config.cols; c++) {
+                        const cell = board[r][c];
+                        if (cell.isMine && !cell.isFlagged) {
+                            cell.isFlagged = true;
+                            const el = document.getElementById(`cell-${r}-${c}`);
+                            el.innerHTML = '<i class="fa-solid fa-flag text-amber-500"></i>';
+                        }
+                    }
+                }
+                flagsPlaced = config.mines;
+                updateMineDisplay();
+
+                saveBestTime(currentDifficulty, timer);
+
+                setTimeout(() => {
+                    showGameOverModal(true);
+                }, 400);
+            }
+        }
+
+        // Display Game Over Win/Loss Dialog
+        function showGameOverModal(isWin) {
+            const titleEl = document.getElementById('gameover-title');
+            const msgEl = document.getElementById('gameover-message');
+            const iconEl = document.getElementById('gameover-icon');
+
+            if (isWin) {
+                iconEl.textContent = '🏆';
+                titleEl.textContent = 'VICTORY!';
+                titleEl.className = 'text-2xl font-bold text-amber-400 mb-1';
+                msgEl.textContent = `You cleared all mines in ${timer} seconds!`;
+            } else {
+                iconEl.textContent = '💥';
+                titleEl.textContent = 'GAME OVER';
+                titleEl.className = 'text-2xl font-bold text-red-500 mb-1';
+                msgEl.textContent = 'You stepped on a mine. Better luck next time!';
+            }
+
+            modalGameOver.classList.remove('hidden');
+        }
+
+        // Timer Logic
+        function startTimer() {
+            timer = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timer++;
+                if (timer > 999) timer = 999;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            timerCountEl.textContent = String(timer).padStart(3, '0');
+        }
+
+        function updateMineDisplay() {
+            const remaining = config.mines - flagsPlaced;
+            const displayValue = Math.max(-99, Math.min(999, remaining));
+            mineCountEl.textContent = String(displayValue).padStart(3, '0');
+        }
+
+        // High Score / Stats Management with localStorage
+        function saveBestTime(difficulty, time) {
+            if (difficulty === 'custom') return;
+
+            const currentBest = localStorage.getItem(`minesweeper_best_${difficulty}`);
+            if (!currentBest || time < parseInt(currentBest)) {
+                localStorage.setItem(`minesweeper_best_${difficulty}`, time);
+            }
+        }
+
+        function loadStats() {
+            ['beginner', 'intermediate', 'expert'].forEach(diff => {
+                const best = localStorage.getItem(`minesweeper_best_${diff}`);
+                const el = document.getElementById(`stat-${diff}`);
+                if (el) {
+                    el.textContent = best ? `${best}s` : '--:--';
+                }
+            });
+        }
+
+        function showStatsModal() {
+            loadStats();
+            modalStats.classList.remove('hidden');
+        }
+
+        function clearStats() {
+            ['beginner', 'intermediate', 'expert'].forEach(diff => {
+                localStorage.removeItem(`minesweeper_best_${diff}`);
+            });
+            loadStats();
+        }
+    </script>
+</body>
+</html>
