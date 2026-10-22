@@ -1,689 +1,892 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100 select-none">
+<html lang="en" class="h-full select-none dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Minesweeper - 100 Level Shape Campaign</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    * { touch-action: manipulation; -webkit-touch-callout: none; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minesweeper - Puzzle Campaign</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        arcade: {
+                            base: '#0d0b18',
+                            panel: '#161228',
+                            card: '#1f1938',
+                            accent: '#a855f7',
+                            neonPink: '#ec4899',
+                            neonCyan: '#06b6d4',
+                            neonGold: '#eab308'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Global touch prevention */
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
 
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #090d16; }
-    ::-webkit-scrollbar-thumb { background: #222f43; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #33435c; }
+        /* Fixed cell styling */
+        .ms-cell {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            min-height: 38px;
+            box-sizing: border-box;
+            position: relative;
+        }
 
-    /* Dynamic Cell Sizing */
-    .ms-cell {
-      width: var(--cell-size, 42px);
-      height: var(--cell-size, 42px);
-      min-width: var(--cell-size, 42px);
-      min-height: var(--cell-size, 42px);
-      font-weight: 800;
-      font-size: calc(var(--cell-size, 42px) * 0.5);
-      user-select: none;
-      transition: background-color 0.1s, transform 0.05s, border-color 0.1s;
-    }
+        /* Void tile (outside level shape) */
+        .cell-void {
+            visibility: hidden;
+            pointer-events: none;
+        }
 
-    /* Cell Styles */
-    .ms-unrevealed {
-      background: linear-gradient(145deg, #1e293b, #0f172a);
-      border-top: 2px solid #334155;
-      border-left: 2px solid #334155;
-      border-right: 2px solid #020617;
-      border-bottom: 2px solid #020617;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    }
-    
-    .ms-unrevealed:active {
-      transform: scale(0.94);
-      background: #0f172a;
-    }
+        /* Modern unrevealed tile design */
+        .cell-unrevealed {
+            background: linear-gradient(135deg, #2a224a, #181330);
+            border: 2px solid;
+            border-color: #4c3b7a #120d24 #120d24 #4c3b7a;
+            box-shadow: inset 1px 1px 0px rgba(255, 255, 255, 0.15), 0 2px 4px rgba(0,0,0,0.4);
+            border-radius: 6px;
+        }
+        .cell-unrevealed:active {
+            background: #191333 !important;
+            border-color: #120d24 !important;
+            transform: scale(0.94);
+        }
 
-    .ms-pressing {
-      background: #7c3aed !important;
-      border-color: #c084fc !important;
-      box-shadow: 0 0 12px #c084fc !important;
-      transform: scale(0.92);
-    }
+        /* Immediate Long Press Visual Hint State */
+        .cell-pressing-active {
+            box-shadow: 0 0 12px #ec4899, inset 0 0 8px #ec4899 !important;
+            border-color: #f472b6 !important;
+            animation: pulse-press 0.3s infinite alternate;
+        }
 
-    .ms-revealed-zero {
-      background: #070a12;
-      border: 1px solid #111827;
-      box-shadow: inset 2px 2px 5px rgba(0,0,0,0.8);
-    }
+        @keyframes pulse-press {
+            0% { transform: scale(0.95); }
+            100% { transform: scale(1.05); }
+        }
 
-    .ms-revealed-num {
-      background: #0d1322;
-      border: 1px solid #1e293b;
-      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.5);
-    }
+        /* Revealed Empty Zero (0) Cell Styling */
+        .cell-revealed-zero {
+            background-color: #090710 !important;
+            border: 1px solid #1c1633 !important;
+            box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.9) !important;
+            border-radius: 4px;
+        }
 
-    /* Void/Blocked Void Cells */
-    .ms-void {
-      width: var(--cell-size, 42px);
-      height: var(--cell-size, 42px);
-      min-width: var(--cell-size, 42px);
-      min-height: var(--cell-size, 42px);
-      visibility: hidden;
-      pointer-events: none;
-    }
+        /* Revealed Number Cell Styling */
+        .cell-revealed-num {
+            background-color: #130f24 !important;
+            border: 1px solid #2d244e !important;
+            box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.6) !important;
+            border-radius: 4px;
+        }
 
-    .num-1 { color: #38bdf8; }
-    .num-2 { color: #4ade80; }
-    .num-3 { color: #f87171; }
-    .num-4 { color: #c084fc; }
-    .num-5 { color: #fbbf24; }
-    .num-6 { color: #2dd4bf; }
-    .num-7 { color: #f472b6; }
-    .num-8 { color: #94a3b8; }
-  </style>
+        /* Digital LED font styling */
+        .digital-font {
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px rgba(236, 72, 153, 0.8);
+        }
+
+        /* Vibrant Arcade Number Colors */
+        .num-1 { color: #38bdf8; text-shadow: 0 0 4px rgba(56, 189, 248, 0.4); }
+        .num-2 { color: #4ade80; text-shadow: 0 0 4px rgba(74, 222, 128, 0.4); }
+        .num-3 { color: #f43f5e; text-shadow: 0 0 4px rgba(244, 63, 94, 0.4); }
+        .num-4 { color: #a855f7; text-shadow: 0 0 4px rgba(168, 85, 247, 0.4); }
+        .num-5 { color: #f97316; text-shadow: 0 0 4px rgba(249, 115, 22, 0.4); }
+        .num-6 { color: #2dd4bf; text-shadow: 0 0 4px rgba(45, 212, 191, 0.4); }
+        .num-7 { color: #facc15; text-shadow: 0 0 4px rgba(250, 204, 21, 0.4); }
+        .num-8 { color: #e2e8f0; text-shadow: 0 0 4px rgba(226, 232, 240, 0.4); }
+
+        /* Animation effects */
+        @keyframes popIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            70% { transform: scale(1.25); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pop-in {
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Scrollbars for board container */
+        .board-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .board-scroll::-webkit-scrollbar-track {
+            background: #0d0b18;
+        }
+        .board-scroll::-webkit-scrollbar-thumb {
+            background: #2a224a;
+            border-radius: 4px;
+        }
+    </style>
 </head>
-<body class="h-full flex flex-col justify-between overflow-x-hidden">
+<body class="bg-arcade-base text-slate-100 h-full flex flex-col font-sans transition-colors duration-200 overflow-x-hidden">
 
-  <!-- Header Navigation -->
-  <header class="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between shadow-lg z-20 shrink-0">
-    <div class="flex items-center gap-3">
-      <a href="index.html" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition" title="Back to Classic Mode">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-      </a>
-      <div>
-        <h1 class="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-400">
-          🧩 PUZZLE CAMPAIGN
-        </h1>
-        <p class="text-xs text-slate-400 font-medium">100 Unique Level Shapes</p>
-      </div>
-    </div>
+    <!-- Top Navigation Header -->
+    <header class="w-full bg-arcade-panel/90 backdrop-blur border-b border-purple-900/40 px-4 py-3 sticky top-0 z-30 shadow-lg">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <a href="index.html" class="p-2 rounded-xl bg-arcade-card hover:bg-purple-900/40 text-purple-300 border border-purple-500/20 transition-all shadow flex items-center justify-center">
+                    <i class="fa-solid fa-arrow-left text-base"></i>
+                </a>
+                <div>
+                    <h1 class="font-black text-lg leading-tight tracking-wider bg-gradient-to-r from-pink-400 via-purple-300 to-cyan-400 bg-clip-text text-transparent flex items-center gap-2">
+                        <i class="fa-solid fa-puzzle-piece text-pink-500"></i> PUZZLE CAMPAIGN
+                    </h1>
+                    <p class="text-[10px] uppercase font-semibold tracking-wider text-purple-300/70">100 Unique Level Shapes</p>
+                </div>
+            </div>
 
-    <!-- Quick Buttons -->
-    <div class="flex items-center gap-2">
-      <button id="levelSelectBtn" class="px-3 py-1.5 rounded-lg bg-purple-900/60 hover:bg-purple-800/80 border border-purple-500/40 text-purple-200 text-xs font-bold transition flex items-center gap-1.5">
-        <span>🗺️</span> Levels
-      </button>
-      <button id="soundBtn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-400 transition" title="Toggle Sound">
-        <svg id="soundOnIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"/></svg>
-        <svg id="soundOffIcon" class="w-5 h-5 hidden text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
-      </button>
-    </div>
-  </header>
-
-  <!-- Level Progress Status & Scoreboard -->
-  <main class="flex-1 flex flex-col items-center justify-start p-2 max-w-full overflow-hidden min-h-0">
-    
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-2.5 mb-2 shadow-md space-y-2 shrink-0">
-      <div class="flex items-center justify-between">
-        <div>
-          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Current Stage</span>
-          <span id="levelTitleDisplay" class="text-sm font-black text-amber-400">Level 1: The Ring</span>
+            <!-- Header Buttons -->
+            <div class="flex items-center space-x-2">
+                <button id="btn-sound" class="p-2.5 rounded-xl bg-arcade-card hover:bg-purple-900/40 text-purple-300 border border-purple-500/20 transition-all shadow" title="Toggle Sound">
+                    <i id="sound-icon" class="fa-solid fa-volume-high text-base"></i>
+                </button>
+                <button id="btn-levels" class="px-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold text-xs border border-pink-400/30 transition-all shadow-lg flex items-center gap-1.5">
+                    <i class="fa-solid fa-map"></i>
+                    <span>Levels</span>
+                </button>
+            </div>
         </div>
-        <div class="flex items-center gap-2">
-          <button id="resetBtn" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-lg transition active:scale-95 shadow">
-            😎
-          </button>
-        </div>
-      </div>
+    </header>
 
-      <div class="flex items-center justify-between pt-1 border-t border-slate-800 text-xs font-bold">
-        <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800">
-          <span class="text-red-400">💣</span>
-          <span id="mineCountDisplay" class="font-mono text-slate-200">000</span>
+    <!-- Main Content Container -->
+    <main class="flex-1 flex flex-col items-center justify-start p-2 sm:p-4 max-w-5xl mx-auto w-full">
+
+        <!-- Stage Title Banner -->
+        <div class="w-full max-w-2xl bg-arcade-panel/80 p-3 rounded-2xl border border-purple-900/40 shadow-xl backdrop-blur flex items-center justify-between mb-3">
+            <div>
+                <span class="text-[10px] uppercase font-black text-purple-400 tracking-wider">CURRENT STAGE</span>
+                <h2 id="stage-title" class="text-base font-black text-amber-400">Ring Donut (Lvl 1)</h2>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btn-prev-level" class="p-2 rounded-xl bg-arcade-card hover:bg-purple-900/40 text-purple-300 border border-purple-800/40 transition-all text-xs font-bold">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button id="btn-next-level" class="p-2 rounded-xl bg-arcade-card hover:bg-purple-900/40 text-purple-300 border border-purple-800/40 transition-all text-xs font-bold">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
-        <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800">
-          <span class="text-purple-400">⏱️</span>
-          <span id="timerDisplay" class="font-mono text-purple-300">000s</span>
+
+        <!-- Scoreboard Header -->
+        <div class="w-full max-w-2xl bg-arcade-panel rounded-t-2xl border-t border-x border-purple-800/40 p-3 flex items-center justify-between shadow-2xl">
+            <!-- Mine Counter -->
+            <div class="flex items-center bg-black/60 px-3.5 py-1.5 rounded-xl border border-pink-500/30 space-x-2 shadow-inner">
+                <i class="fa-solid fa-bomb text-pink-500 text-sm"></i>
+                <span id="mine-count" class="digital-font text-pink-500 text-2xl font-bold w-12 text-right">000</span>
+            </div>
+
+            <!-- Face Button -->
+            <button id="btn-face" class="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-900 to-indigo-800 border-2 border-pink-500/50 flex items-center justify-center text-2xl hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-pink-500/10">
+                <span id="face-icon">😎</span>
+            </button>
+
+            <!-- Timer -->
+            <div class="flex items-center bg-black/60 px-3.5 py-1.5 rounded-xl border border-cyan-500/30 space-x-2 shadow-inner">
+                <i class="fa-solid fa-stopwatch text-cyan-400 text-sm"></i>
+                <span id="timer-count" class="digital-font text-cyan-400 text-2xl font-bold w-14 text-right">000s</span>
+            </div>
         </div>
-        <div class="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800">
-          <span class="text-emerald-400">🔍</span>
-          <span id="safeLeftDisplay" class="font-mono text-emerald-300">00</span>
+
+        <!-- Board Container -->
+        <div id="board-container" class="board-scroll w-full max-w-2xl bg-black/80 rounded-b-2xl border border-purple-800/40 p-3 overflow-auto flex items-center justify-center min-h-[360px] max-h-[60vh] shadow-2xl relative">
+            <div id="minesweeper-board" class="grid gap-1 m-auto justify-center items-center"></div>
         </div>
-      </div>
+
+        <!-- Touch Controls -->
+        <div class="mt-4 flex items-center justify-center space-x-3 w-full max-w-xs">
+            <button id="btn-mode-dig" class="flex-1 py-3 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center space-x-2 border-2 border-cyan-500 bg-cyan-600 text-white shadow-lg shadow-cyan-500/20 transition-all">
+                <i class="fa-solid fa-shovel text-sm"></i>
+                <span>DIG MODE</span>
+            </button>
+            <button id="btn-mode-flag" class="flex-1 py-3 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center space-x-2 border-2 border-purple-900 bg-arcade-card text-purple-300 shadow-lg transition-all">
+                <i class="fa-solid fa-flag text-sm"></i>
+                <span>FLAG MODE</span>
+            </button>
+        </div>
+        <p class="text-xs text-purple-300/60 mt-2 text-center">
+            Touch & hold any valid tile to place a flag immediately!
+        </p>
+    </main>
+
+    <!-- Levels Modal -->
+    <div id="modal-levels" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-arcade-panel border border-purple-700/50 rounded-2xl p-5 w-full max-w-2xl shadow-2xl pop-in max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-map-location-dot text-pink-400"></i> Select Level (1 - 100)
+                </h3>
+                <button id="btn-levels-close" class="text-purple-300 hover:text-white p-2">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Level Grid Selector -->
+            <div id="levels-grid" class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2 overflow-y-auto pr-1 p-2 bg-black/40 rounded-xl border border-purple-900/40 flex-1">
+                <!-- Injected levels dynamically -->
+            </div>
+        </div>
     </div>
 
-    <!-- Scrollable Board Viewport -->
-    <div id="boardViewport" class="w-full flex-1 min-h-[55vh] flex justify-center items-center overflow-auto p-2 border border-slate-900/50 rounded-xl bg-slate-950/40 backdrop-blur-sm shadow-inner">
-      <div id="boardGrid" class="grid gap-1 bg-slate-900 p-3 rounded-xl border border-slate-800/80 shadow-2xl">
-        <!-- Cells Injected via JS -->
-      </div>
-    </div>
-
-  </main>
-
-  <!-- Mobile Mode Bar -->
-  <div class="sticky bottom-0 w-full bg-slate-900/95 border-t border-slate-800 p-2.5 backdrop-blur z-20 flex justify-center shrink-0">
-    <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner w-full max-w-xs">
-      <button id="modeDigBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-purple-600 text-white shadow">
-        <span>⛏️</span> DIG MODE
-      </button>
-      <button id="modeFlagBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-slate-400 hover:text-slate-200">
-        <span>🚩</span> FLAG MODE
-      </button>
-    </div>
-  </div>
-
-  <!-- Level Select Modal -->
-  <div id="levelModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 shadow-2xl relative space-y-4 max-h-[85vh] flex flex-col">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h2 class="text-lg font-black text-purple-400 flex items-center gap-2">
-          <span>🗺️</span> Campaign Map (100 Levels)
-        </h2>
-        <button id="closeLevelModalBtn" class="text-slate-400 hover:text-white p-1">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div id="levelGridContainer" class="grid grid-cols-5 sm:grid-cols-10 gap-2 overflow-y-auto p-1 flex-1"></div>
-    </div>
-  </div>
-
-  <script>
-    let soundEnabled = true;
-    let audioCtx = null;
-
-    function initAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-
-    function playSound(type) {
-      if (!soundEnabled) return;
-      initAudio();
-      if (!audioCtx) return;
-
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      const now = audioCtx.currentTime;
-
-      if (type === 'dig') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(450, now);
-        osc.frequency.exponentialRampToValueAtTime(850, now + 0.05);
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
-        osc.start(now); osc.stop(now + 0.05);
-      } else if (type === 'flag') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(650, now);
-        osc.frequency.exponentialRampToValueAtTime(350, now + 0.08);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
-        osc.start(now); osc.stop(now + 0.08);
-      } else if (type === 'explode') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(160, now);
-        osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
-        osc.start(now); osc.stop(now + 0.35);
-      } else if (type === 'win') {
-        const notes = [523.25, 659.25, 783.99, 1046.50];
-        notes.forEach((freq, idx) => {
-          const nOsc = audioCtx.createOscillator();
-          const nGain = audioCtx.createGain();
-          nOsc.connect(nGain); nGain.connect(audioCtx.destination);
-          nOsc.type = 'sine';
-          nOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
-          nGain.gain.setValueAtTime(0.2, now + idx * 0.08);
-          nGain.gain.linearRampToValueAtTime(0.01, now + idx * 0.08 + 0.2);
-          nOsc.start(now + idx * 0.08); nOsc.stop(now + idx * 0.08 + 0.2);
-        });
-      }
-    }
-
-    let currentLevel = 1;
-    let campaignData = JSON.parse(localStorage.getItem('ms_puzzle_data')) || {
-      unlockedLevel: 1,
-      completedLevels: []
-    };
-
-    function saveCampaignData() {
-      localStorage.setItem('ms_puzzle_data', JSON.stringify(campaignData));
-    }
-
-    function generateLevelShape(lvl) {
-      let rows = Math.min(18, 8 + Math.floor(lvl / 10));
-      let cols = Math.min(18, 8 + Math.floor(lvl / 10));
-      let grid = [];
-
-      let shapeNames = [
-        'Ring Donut', 'Plus Cross', 'Hourglass', 'Diamond', 'Corner L', 
-        'Twin Towers', 'Target Bullseye', 'Chevrons', 'Maze Fortress', 'Fractured Star'
-      ];
-      let name = shapeNames[(lvl - 1) % shapeNames.length] + ` (Lvl ${lvl})`;
-
-      for (let r = 0; r < rows; r++) {
-        let row = [];
-        for (let c = 0; c < cols; c++) {
-          let valid = true;
-          let nx = (c / (cols - 1)) * 2 - 1;
-          let ny = (r / (rows - 1)) * 2 - 1;
-          let dist = Math.hypot(nx, ny);
-
-          const shapeType = (lvl - 1) % 10;
-          
-          switch (shapeType) {
-            case 0: if (dist < 0.35 || dist > 0.95) valid = false; break;
-            case 1: if (Math.abs(nx) > 0.4 && Math.abs(ny) > 0.4) valid = false; break;
-            case 2: if (Math.abs(nx) > Math.abs(ny) + 0.2) valid = false; break;
-            case 3: if (Math.abs(nx) + Math.abs(ny) > 1.1) valid = false; break;
-            case 4: if (nx > 0.1 && ny < -0.1) valid = false; break;
-            case 5: if (Math.abs(nx) < 0.25 && Math.abs(ny) < 0.7) valid = false; break;
-            case 6: if (dist > 0.9 || (dist > 0.35 && dist < 0.6)) valid = false; break;
-            case 7: if ((Math.floor((r + c) / 2) % 2 === 0) && (r < 2 || r > rows - 3)) valid = false; break;
-            case 8: if ((r % 3 === 0 && c % 3 === 0) || (r === 0 || c === 0 || r === rows-1 || c === cols-1)) valid = false; break;
-            case 9: if (dist > 0.95 || (Math.abs(nx * ny) < 0.05 && dist > 0.4)) valid = false; break;
-          }
-          row.push(valid);
-        }
-        grid.push(row);
-      }
-
-      let activeCount = 0;
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          if (grid[r][c]) activeCount++;
-        }
-      }
-
-      let mineRatio = Math.min(0.22, 0.12 + (lvl * 0.001));
-      let mineCount = Math.max(3, Math.floor(activeCount * mineRatio));
-
-      return { rows, cols, grid, mineCount, activeCount, name };
-    }
-
-    let levelConfig = null;
-    let board = [];
-    let gameStatus = 'ready';
-    let firstClick = true;
-    let flagsPlaced = 0;
-    let isFlagMode = false;
-    let timer = 0;
-    let timerInterval = null;
-
-    let touchTimer = null;
-    let touchStartX = 0, touchStartY = 0;
-    let isLongPressTriggered = false;
-    const LONG_PRESS_MS = 280;
-    const TOUCH_MOVE_THRESHOLD = 10;
-
-    const boardGrid = document.getElementById('boardGrid');
-    const boardViewport = document.getElementById('boardViewport');
-    const levelTitleDisplay = document.getElementById('levelTitleDisplay');
-    const mineCountDisplay = document.getElementById('mineCountDisplay');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const safeLeftDisplay = document.getElementById('safeLeftDisplay');
-    const resetBtn = document.getElementById('resetBtn');
-    const modeDigBtn = document.getElementById('modeDigBtn');
-    const modeFlagBtn = document.getElementById('modeFlagBtn');
-    const levelSelectBtn = document.getElementById('levelSelectBtn');
-    const levelModal = document.getElementById('levelModal');
-    const closeLevelModalBtn = document.getElementById('closeLevelModalBtn');
-    const levelGridContainer = document.getElementById('levelGridContainer');
-    const soundBtn = document.getElementById('soundBtn');
-
-    function updateCellSizing() {
-      if (!boardViewport || !levelConfig) return;
-      const availWidth = boardViewport.clientWidth - 32;
-      const availHeight = boardViewport.clientHeight - 32;
-
-      const sizeFromWidth = Math.floor(availWidth / levelConfig.cols);
-      const sizeFromHeight = Math.floor(availHeight / levelConfig.rows);
-      
-      let calculatedSize = Math.min(sizeFromWidth, sizeFromHeight);
-      calculatedSize = Math.max(34, Math.min(64, calculatedSize));
-
-      document.documentElement.style.setProperty('--cell-size', `${calculatedSize}px`);
-    }
-
-    window.addEventListener('resize', updateCellSizing);
-
-    function loadLevel(lvlNum) {
-      currentLevel = lvlNum;
-      levelConfig = generateLevelShape(lvlNum);
-      levelTitleDisplay.innerText = levelConfig.name;
-      updateCellSizing();
-      resetGame();
-    }
-
-    function resetGame() {
-      clearInterval(timerInterval);
-      gameStatus = 'ready';
-      firstClick = true;
-      flagsPlaced = 0;
-      timer = 0;
-
-      resetBtn.innerText = '😎';
-      timerDisplay.innerText = '000s';
-      updateCounters();
-
-      board = [];
-      for (let r = 0; r < levelConfig.rows; r++) {
-        let row = [];
-        for (let c = 0; c < levelConfig.cols; c++) {
-          row.push({
-            active: levelConfig.grid[r][c],
-            mine: false,
-            revealed: false,
-            flagged: false,
-            count: 0
-          });
-        }
-        board.push(row);
-      }
-
-      renderBoard();
-    }
-
-    function renderBoard() {
-      updateCellSizing();
-      boardGrid.style.gridTemplateColumns = `repeat(${levelConfig.cols}, minmax(0, 1fr))`;
-      boardGrid.innerHTML = '';
-
-      for (let r = 0; r < levelConfig.rows; r++) {
-        for (let c = 0; c < levelConfig.cols; c++) {
-          const cellData = board[r][c];
-          const cellEl = document.createElement('button');
-          cellEl.id = `cell-${r}-${c}`;
-
-          if (!cellData.active) {
-            cellEl.className = 'ms-void';
-          } else {
-            cellEl.className = 'ms-cell ms-unrevealed rounded-lg flex items-center justify-center';
+    <!-- GameOver Modal -->
+    <div id="modal-gameover" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-arcade-panel border border-purple-700/50 rounded-2xl p-6 w-full max-w-xs text-center shadow-2xl pop-in">
+            <div id="gameover-icon" class="text-5xl mb-3">🎉</div>
+            <h2 id="gameover-title" class="text-2xl font-bold text-slate-100 mb-1">VICTORY!</h2>
+            <p id="gameover-message" class="text-xs text-purple-300 mb-4">Stage cleared in 32s!</p>
             
-            cellEl.addEventListener('touchstart', (e) => handleTouchStart(e, r, c), { passive: false });
-            cellEl.addEventListener('touchmove', (e) => handleTouchMove(e), { passive: true });
-            cellEl.addEventListener('touchend', (e) => handleTouchEnd(e, r, c));
-            cellEl.addEventListener('click', () => handleCellClick(r, c));
-            cellEl.addEventListener('contextmenu', (e) => {
-              e.preventDefault();
-              toggleFlag(r, c);
+            <div class="space-y-2">
+                <button id="btn-next-stage" class="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-xs shadow-lg shadow-pink-500/20 transition-all">
+                    Next Level
+                </button>
+                <button id="btn-retry-stage" class="w-full py-2.5 rounded-xl bg-arcade-card hover:bg-purple-900/40 text-purple-200 border border-purple-700/40 text-xs font-bold transition-all">
+                    Retry Level
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let currentLevel = 1;
+        let unlockedLevel = parseInt(localStorage.getItem('ms_puzzle_unlocked') || '1');
+        let config = { rows: 11, cols: 11, mines: 15, name: "Ring Donut" };
+        let board = [];
+        let validCellCount = 0;
+        let isFirstClick = true;
+        let isGameOver = false;
+        let activeMode = 'dig';
+        let timer = 0;
+        let timerInterval = null;
+        let flagsPlaced = 0;
+        let cellsRevealed = 0;
+        let soundMuted = false;
+
+        // Long Press Parameters
+        let longPressTimer = null;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isLongPressTriggered = false;
+        const LONG_PRESS_DURATION = 280;
+        const MOVE_THRESHOLD = 10;
+
+        // Web Audio Context Synthesizer
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playAudio(type) {
+            if (soundMuted) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'dig') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(180, now + 0.08);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'flag') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(650, now);
+                    osc.frequency.exponentialRampToValueAtTime(1050, now + 0.07);
+                    gain.gain.setValueAtTime(0.35, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.07);
+                    osc.start(now);
+                    osc.stop(now + 0.07);
+                } else if (type === 'explode') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(140, now);
+                    osc.frequency.exponentialRampToValueAtTime(25, now + 0.4);
+                    gain.gain.setValueAtTime(0.5, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'win') {
+                    [440, 554, 659, 880].forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        noteOsc.type = 'sine';
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                        noteGain.gain.setValueAtTime(0.2, now + idx * 0.08);
+                        noteGain.gain.linearRampToValueAtTime(0.01, now + idx * 0.08 + 0.12);
+                        noteOsc.start(now + idx * 0.08);
+                        noteOsc.stop(now + idx * 0.08 + 0.12);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        function triggerHaptic(pattern = 40) {
+            if ('vibrate' in navigator) {
+                try { navigator.vibrate(pattern); } catch (e) {}
+            }
+        }
+
+        // Shape Procedural Generation for 100 Campaign Levels
+        function generateLevelConfig(level) {
+            const size = 11;
+            const center = 5;
+            let shapeName = `Level ${level}`;
+            let mask = Array(size).fill(null).map(() => Array(size).fill(true));
+
+            const shapeType = level % 10;
+
+            if (shapeType === 1) { // Ring Donut
+                shapeName = "Ring Donut";
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        const dist = Math.hypot(r - center, c - center);
+                        if (dist < 2.0 || dist > 5.0) mask[r][c] = false;
+                    }
+                }
+            } else if (shapeType === 2) { // Cross
+                shapeName = "Neon Cross";
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if (Math.abs(r - center) > 2 && Math.abs(c - center) > 2) mask[r][c] = false;
+                    }
+                }
+            } else if (shapeType === 3) { // Diamond
+                shapeName = "Cyber Diamond";
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if (Math.abs(r - center) + Math.abs(c - center) > 5) mask[r][c] = false;
+                    }
+                }
+            } else if (shapeType === 4) { // Heart
+                shapeName = "Heart Pulse";
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        const x = (c - center) / 4;
+                        const y = (center - r) / 4;
+                        const eq = Math.pow(x*x + y*y - 1, 3) - x*x*y*y*y;
+                        if (eq > 0) mask[r][c] = false;
+                    }
+                }
+            } else if (shapeType === 5) { // Hourglass
+                shapeName = "Hourglass";
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        const dr = Math.abs(r - center);
+                        const dc = Math.abs(c - center);
+                        if (dc > dr + 1) mask[r][c] = false;
+                    }
+                }
+            } else if (shapeType === 6) { // Skull
+                shapeName = "Neon Skull";
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if (r > 8 && (c < 3 || c > 7)) mask[r][c] = false;
+                        if (r >= 4 && r <= 6 && (c === 3 || c === 7)) mask[r][c] = false;
+                    }
+                }
+            } else if (shapeType === 7) { // Butterfly
+                shapeName = "Butterfly Wings";
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if (c === center) mask[r][c] = true;
+                        else if (Math.abs(r - center) < 1 && Math.abs(c - center) > 3) mask[r][c] = false;
+                    }
+                }
+            } else if (shapeType === 8) { // Star Frame
+                shapeName = "Star Grid";
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if ((r === 0 || r === size - 1) && (c === 0 || c === size - 1)) mask[r][c] = false;
+                        if (r >= 4 && r <= 6 && c >= 4 && c <= 6 && (r !== 5 || c !== 5)) mask[r][c] = false;
+                    }
+                }
+            } else if (shapeType === 9) { // Maze Corridors
+                shapeName = "Corridors";
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if (r % 2 === 1 && c % 2 === 1) mask[r][c] = false;
+                    }
+                }
+            } else { // Outer Oval
+                shapeName = "Arcade Shield";
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        const dist = Math.hypot((r - center)*1.1, (c - center)*0.9);
+                        if (dist > 5.2) mask[r][c] = false;
+                    }
+                }
+            }
+
+            // Calculate valid tiles
+            let validTiles = 0;
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (mask[r][c]) validTiles++;
+                }
+            }
+
+            const mineDensity = 0.14 + (level * 0.001);
+            const mines = Math.max(3, Math.floor(validTiles * Math.min(0.25, mineDensity)));
+
+            return {
+                rows: size,
+                cols: size,
+                mines: mines,
+                name: `${shapeName} (Lvl ${level})`,
+                mask: mask
+            };
+        }
+
+        // Initializer
+        window.onload = function() {
+            setupEventListeners();
+            loadLevel(currentLevel);
+        };
+
+        function setupEventListeners() {
+            document.getElementById('btn-face').addEventListener('click', () => startNewGame());
+            document.getElementById('btn-sound').addEventListener('click', () => {
+                soundMuted = !soundMuted;
+                document.getElementById('sound-icon').className = soundMuted ? 'fa-solid fa-volume-xmark text-red-400' : 'fa-solid fa-volume-high text-base';
             });
-          }
 
-          boardGrid.appendChild(cellEl);
+            document.getElementById('btn-mode-dig').addEventListener('click', () => setTouchMode('dig'));
+            document.getElementById('btn-mode-flag').addEventListener('click', () => setTouchMode('flag'));
+
+            document.getElementById('btn-prev-level').addEventListener('click', () => {
+                if (currentLevel > 1) loadLevel(currentLevel - 1);
+            });
+            document.getElementById('btn-next-level').addEventListener('click', () => {
+                if (currentLevel < unlockedLevel) loadLevel(currentLevel + 1);
+            });
+
+            document.getElementById('btn-levels').addEventListener('click', showLevelsModal);
+            document.getElementById('btn-levels-close').addEventListener('click', () => {
+                document.getElementById('modal-levels').classList.add('hidden');
+            });
+
+            document.getElementById('btn-retry-stage').addEventListener('click', () => {
+                document.getElementById('modal-gameover').classList.add('hidden');
+                startNewGame();
+            });
+            document.getElementById('btn-next-stage').addEventListener('click', () => {
+                document.getElementById('modal-gameover').classList.add('hidden');
+                loadLevel(currentLevel + 1);
+            });
         }
-      }
-    }
 
-    function generateMines(safeR, safeC) {
-      let placed = 0;
-
-      while (placed < levelConfig.mineCount) {
-        let r = Math.floor(Math.random() * levelConfig.rows);
-        let c = Math.floor(Math.random() * levelConfig.cols);
-
-        if (!board[r][c].active) continue;
-        if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
-
-        if (!board[r][c].mine) {
-          board[r][c].mine = true;
-          placed++;
-        }
-      }
-
-      for (let r = 0; r < levelConfig.rows; r++) {
-        for (let c = 0; c < levelConfig.cols; c++) {
-          if (!board[r][c].active || board[r][c].mine) continue;
-          let cnt = 0;
-          for (let dr = -1; dr <= 1; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-              let nr = r + dr, nc = c + dc;
-              if (nr >= 0 && nr < levelConfig.rows && nc >= 0 && nc < levelConfig.cols) {
-                if (board[nr][nc].active && board[nr][nc].mine) cnt++;
-              }
+        function setTouchMode(mode) {
+            activeMode = mode;
+            if (mode === 'dig') {
+                document.getElementById('btn-mode-dig').className = "flex-1 py-3 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center space-x-2 border-2 border-cyan-500 bg-cyan-600 text-white shadow-lg shadow-cyan-500/20 transition-all";
+                document.getElementById('btn-mode-flag').className = "flex-1 py-3 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center space-x-2 border-2 border-purple-900 bg-arcade-card text-purple-300 shadow-lg transition-all";
+            } else {
+                document.getElementById('btn-mode-flag').className = "flex-1 py-3 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center space-x-2 border-2 border-pink-500 bg-pink-600 text-white shadow-lg shadow-pink-500/20 transition-all";
+                document.getElementById('btn-mode-dig').className = "flex-1 py-3 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center space-x-2 border-2 border-purple-900 bg-arcade-card text-purple-300 shadow-lg transition-all";
             }
-          }
-          board[r][c].count = cnt;
-        }
-      }
-    }
-
-    function handleCellClick(r, c) {
-      if (gameStatus === 'won' || gameStatus === 'lost') return;
-      if (isFlagMode) {
-        toggleFlag(r, c);
-        return;
-      }
-      digCell(r, c);
-    }
-
-    function digCell(r, c) {
-      const cell = board[r][c];
-      if (!cell.active || cell.flagged || cell.revealed) return;
-
-      if (firstClick) {
-        firstClick = false;
-        generateMines(r, c);
-        startTimer();
-      }
-
-      if (cell.mine) {
-        gameOver(false);
-        return;
-      }
-
-      playSound('dig');
-      revealCell(r, c);
-      checkWinCondition();
-    }
-
-    function revealCell(r, c) {
-      if (r < 0 || r >= levelConfig.rows || c < 0 || c >= levelConfig.cols) return;
-      const cell = board[r][c];
-      if (!cell.active || cell.revealed || cell.flagged) return;
-
-      cell.revealed = true;
-      const el = document.getElementById(`cell-${r}-${c}`);
-      if (!el) return;
-
-      el.classList.remove('ms-unrevealed');
-
-      if (cell.count === 0) {
-        el.classList.add('ms-revealed-zero');
-        el.innerHTML = '';
-        for (let dr = -1; dr <= 1; dr++) {
-          for (let dc = -1; dc <= 1; dc++) {
-            if (dr !== 0 || dc !== 0) revealCell(r + dr, c + dc);
-          }
-        }
-      } else {
-        el.classList.add('ms-revealed-num');
-        el.innerHTML = `<span class="num-${cell.count}">${cell.count}</span>`;
-      }
-    }
-
-    function toggleFlag(r, c) {
-      if (gameStatus === 'won' || gameStatus === 'lost') return;
-      const cell = board[r][c];
-      if (!cell.active || cell.revealed) return;
-
-      cell.flagged = !cell.flagged;
-      flagsPlaced += cell.flagged ? 1 : -1;
-      playSound('flag');
-
-      const el = document.getElementById(`cell-${r}-${c}`);
-      if (el) el.innerText = cell.flagged ? '🚩' : '';
-
-      if (navigator.vibrate) navigator.vibrate(40);
-      updateCounters();
-    }
-
-    function handleTouchStart(e, r, c) {
-      initAudio();
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      isLongPressTriggered = false;
-
-      const el = document.getElementById(`cell-${r}-${c}`);
-      if (el && !board[r][c].revealed) el.classList.add('ms-pressing');
-
-      touchTimer = setTimeout(() => {
-        isLongPressTriggered = true;
-        if (el) el.classList.remove('ms-pressing');
-        toggleFlag(r, c);
-      }, LONG_PRESS_MS);
-    }
-
-    function handleTouchMove(e) {
-      if (!touchTimer) return;
-      const moveX = e.touches[0].clientX;
-      const moveY = e.touches[0].clientY;
-      if (Math.hypot(moveX - touchStartX, moveY - touchStartY) > TOUCH_MOVE_THRESHOLD) {
-        clearTimeout(touchTimer);
-        touchTimer = null;
-        document.querySelectorAll('.ms-pressing').forEach(el => el.classList.remove('ms-pressing'));
-      }
-    }
-
-    function handleTouchEnd(e, r, c) {
-      if (touchTimer) {
-        clearTimeout(touchTimer);
-        touchTimer = null;
-      }
-      document.querySelectorAll('.ms-pressing').forEach(el => el.classList.remove('ms-pressing'));
-      if (isLongPressTriggered) e.preventDefault();
-    }
-
-    function startTimer() {
-      gameStatus = 'playing';
-      timerInterval = setInterval(() => {
-        timer++;
-        timerDisplay.innerText = String(timer).padStart(3, '0') + 's';
-      }, 1000);
-    }
-
-    function updateCounters() {
-      mineCountDisplay.innerText = String(levelConfig.mineCount - flagsPlaced).padStart(3, '0');
-
-      let unrevealedSafe = 0;
-      for (let r = 0; r < levelConfig.rows; r++) {
-        for (let c = 0; c < levelConfig.cols; c++) {
-          if (board[r][c].active && !board[r][c].mine && !board[r][c].revealed) {
-            unrevealedSafe++;
-          }
-        }
-      }
-      safeLeftDisplay.innerText = String(unrevealedSafe).padStart(2, '0');
-    }
-
-    function checkWinCondition() {
-      updateCounters();
-      let unrevealedSafe = 0;
-      for (let r = 0; r < levelConfig.rows; r++) {
-        for (let c = 0; c < levelConfig.cols; c++) {
-          if (board[r][c].active && !board[r][c].mine && !board[r][c].revealed) {
-            unrevealedSafe++;
-          }
-        }
-      }
-
-      if (unrevealedSafe === 0) gameOver(true);
-    }
-
-    function gameOver(isWin) {
-      clearInterval(timerInterval);
-
-      if (isWin) {
-        gameStatus = 'won';
-        resetBtn.innerText = '😎🏆';
-        playSound('win');
-
-        if (!campaignData.completedLevels.includes(currentLevel)) {
-          campaignData.completedLevels.push(currentLevel);
         }
 
-        if (currentLevel === campaignData.unlockedLevel && currentLevel < 100) {
-          campaignData.unlockedLevel = currentLevel + 1;
+        function loadLevel(lvl) {
+            currentLevel = Math.min(Math.max(1, lvl), 100);
+            config = generateLevelConfig(currentLevel);
+            document.getElementById('stage-title').textContent = config.name;
+            startNewGame();
         }
 
-        saveCampaignData();
+        function startNewGame() {
+            clearInterval(timerInterval);
+            timer = 0;
+            flagsPlaced = 0;
+            cellsRevealed = 0;
+            isFirstClick = true;
+            isGameOver = false;
 
-        setTimeout(() => {
-          if (currentLevel < 100) {
-            if (confirm(`🎉 LEVEL ${currentLevel} CLEARED!\nWould you like to proceed to Level ${currentLevel + 1}?`)) {
-              loadLevel(currentLevel + 1);
+            updateTimerDisplay();
+            updateMineDisplay();
+            document.getElementById('face-icon').textContent = '😎';
+
+            createBoardData();
+            renderBoard();
+        }
+
+        function createBoardData() {
+            board = [];
+            validCellCount = 0;
+            for (let r = 0; r < config.rows; r++) {
+                const row = [];
+                for (let c = 0; c < config.cols; c++) {
+                    const isValid = config.mask[r][c];
+                    if (isValid) validCellCount++;
+                    row.push({
+                        r: r,
+                        c: c,
+                        isValid: isValid,
+                        isMine: false,
+                        isRevealed: false,
+                        isFlagged: false,
+                        neighborMines: 0
+                    });
+                }
+                board.push(row);
             }
-          } else {
-            alert('🌟 CONGRATULATIONS! YOU BEAT ALL 100 PUZZLE LEVELS!');
-          }
-        }, 150);
+        }
 
-      } else {
-        gameStatus = 'lost';
-        resetBtn.innerText = '😵';
-        playSound('explode');
+        function renderBoard() {
+            const boardEl = document.getElementById('minesweeper-board');
+            boardEl.innerHTML = '';
+            
+            // Set explicit grid template columns for 38px fixed width
+            boardEl.style.gridTemplateColumns = `repeat(${config.cols}, 38px)`;
 
-        for (let r = 0; r < levelConfig.rows; r++) {
-          for (let c = 0; c < levelConfig.cols; c++) {
-            const cell = board[r][c];
-            const el = document.getElementById(`cell-${r}-${c}`);
-            if (cell.active && cell.mine && el) {
-              el.classList.remove('ms-unrevealed');
-              el.classList.add('bg-rose-950/90', 'border-rose-600');
-              el.innerText = '💣';
+            for (let r = 0; r < config.rows; r++) {
+                for (let c = 0; c < config.cols; c++) {
+                    const cell = board[r][c];
+                    const cellEl = document.createElement('button');
+                    cellEl.id = `cell-${r}-${c}`;
+
+                    if (!cell.isValid) {
+                        cellEl.className = 'ms-cell cell-void';
+                    } else {
+                        cellEl.className = 'ms-cell cell-unrevealed font-black text-base flex items-center justify-center select-none transition-all duration-75';
+                        attachCellEvents(cellEl, cell);
+                    }
+                    boardEl.appendChild(cellEl);
+                }
             }
-          }
-        }
-      }
-    }
-
-    levelSelectBtn.onclick = () => {
-      levelGridContainer.innerHTML = '';
-
-      for (let i = 1; i <= 100; i++) {
-        const isUnlocked = i <= campaignData.unlockedLevel;
-        const isCompleted = campaignData.completedLevels.includes(i);
-        const isCurrent = i === currentLevel;
-
-        const btn = document.createElement('button');
-        btn.className = `p-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center transition border ${
-          isCurrent ? 'bg-purple-600 text-white border-purple-400 ring-2 ring-purple-300' :
-          isCompleted ? 'bg-emerald-950/60 border-emerald-700 text-emerald-300 hover:bg-emerald-900' :
-          isUnlocked ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700' :
-          'bg-slate-950 border-slate-900 text-slate-600 opacity-50 cursor-not-allowed'
-        }`;
-
-        btn.innerHTML = `
-          <span>Lvl ${i}</span>
-          <span class="text-[10px]">${isCompleted ? '✅' : (isUnlocked ? '🔓' : '🔒')}</span>
-        `;
-
-        if (isUnlocked) {
-          btn.onclick = () => {
-            loadLevel(i);
-            levelModal.classList.add('hidden');
-          };
         }
 
-        levelGridContainer.appendChild(btn);
-      }
+        function attachCellEvents(el, cell) {
+            el.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (isGameOver) return;
+                toggleFlag(cell);
+            });
 
-      levelModal.classList.remove('hidden');
-    };
+            el.addEventListener('touchstart', (e) => {
+                if (isGameOver) return;
+                isLongPressTriggered = false;
+                const touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
 
-    closeLevelModalBtn.onclick = () => levelModal.classList.add('hidden');
+                el.classList.add('cell-pressing-active');
 
-    modeDigBtn.onclick = () => {
-      isFlagMode = false;
-      modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-purple-600 text-white shadow";
-      modeFlagBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-slate-400 hover:text-slate-200";
-    };
+                longPressTimer = setTimeout(() => {
+                    isLongPressTriggered = true;
+                    el.classList.remove('cell-pressing-active');
+                    triggerHaptic(40);
+                    toggleFlag(cell);
+                }, LONG_PRESS_DURATION);
+            }, { passive: true });
 
-    modeFlagBtn.onclick = () => {
-      isFlagMode = true;
-      modeFlagBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-purple-600 text-white shadow";
-      modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-slate-400 hover:text-slate-200";
-    };
+            el.addEventListener('touchmove', (e) => {
+                if (!longPressTimer) return;
+                const touch = e.touches[0];
+                if (Math.abs(touch.clientX - touchStartX) > MOVE_THRESHOLD || Math.abs(touch.clientY - touchStartY) > MOVE_THRESHOLD) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                    el.classList.remove('cell-pressing-active');
+                }
+            }, { passive: true });
 
-    resetBtn.onclick = resetGame;
+            el.addEventListener('touchend', () => {
+                el.classList.remove('cell-pressing-active');
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+            });
 
-    soundBtn.onclick = () => {
-      soundEnabled = !soundEnabled;
-      document.getElementById('soundOnIcon').classList.toggle('hidden', !soundEnabled);
-      document.getElementById('soundOffIcon').classList.toggle('hidden', soundEnabled);
-    };
+            el.addEventListener('click', () => {
+                if (isGameOver || isLongPressTriggered) {
+                    isLongPressTriggered = false;
+                    return;
+                }
 
-    loadLevel(campaignData.unlockedLevel || 1);
-  </script>
+                if (cell.isRevealed) {
+                    chordCell(cell);
+                    return;
+                }
+
+                if (activeMode === 'flag') {
+                    toggleFlag(cell);
+                } else {
+                    handleDig(cell);
+                }
+            });
+        }
+
+        function handleDig(cell) {
+            if (cell.isFlagged || cell.isRevealed || !cell.isValid) return;
+
+            if (isFirstClick) {
+                isFirstClick = false;
+                startTimer();
+                generateMines(cell.r, cell.c);
+            }
+
+            if (cell.isMine) {
+                detonateMine(cell);
+                return;
+            }
+
+            playAudio('dig');
+            revealCell(cell);
+            checkWinCondition();
+        }
+
+        function generateMines(safeR, safeC) {
+            let minesToPlace = config.mines;
+            while (minesToPlace > 0) {
+                const r = Math.floor(Math.random() * config.rows);
+                const c = Math.floor(Math.random() * config.cols);
+
+                const isSafe = Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1;
+
+                if (board[r][c].isValid && !board[r][c].isMine && !isSafe) {
+                    board[r][c].isMine = true;
+                    minesToPlace--;
+                }
+            }
+
+            for (let r = 0; r < config.rows; r++) {
+                for (let c = 0; c < config.cols; c++) {
+                    if (board[r][c].isValid && !board[r][c].isMine) {
+                        board[r][c].neighborMines = countNeighborMines(r, c);
+                    }
+                }
+            }
+        }
+
+        function countNeighborMines(r, c) {
+            let count = 0;
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols) {
+                        if (board[nr][nc].isValid && board[nr][nc].isMine) count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function revealCell(cell) {
+            if (cell.isRevealed || cell.isFlagged || !cell.isValid) return;
+
+            cell.isRevealed = true;
+            cellsRevealed++;
+
+            const el = document.getElementById(`cell-${cell.r}-${cell.c}`);
+            if (!el) return;
+            el.classList.remove('cell-unrevealed');
+
+            if (cell.neighborMines === 0) {
+                el.classList.add('cell-revealed-zero');
+                el.textContent = '';
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        const nr = cell.r + dr;
+                        const nc = cell.c + dc;
+                        if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols) {
+                            const neighbor = board[nr][nc];
+                            if (neighbor.isValid && !neighbor.isRevealed) {
+                                revealCell(neighbor);
+                            }
+                        }
+                    }
+                }
+            } else {
+                el.classList.add('cell-revealed-num', `num-${cell.neighborMines}`);
+                el.textContent = cell.neighborMines;
+            }
+        }
+
+        function toggleFlag(cell) {
+            if (cell.isRevealed || !cell.isValid) return;
+
+            cell.isFlagged = !cell.isFlagged;
+            flagsPlaced += cell.isFlagged ? 1 : -1;
+
+            const el = document.getElementById(`cell-${cell.r}-${cell.c}`);
+            if (cell.isFlagged) {
+                el.innerHTML = '<i class="fa-solid fa-flag text-pink-500 pop-in text-base filter drop-shadow-[0_0_6px_rgba(236,72,153,0.8)]"></i>';
+                playAudio('flag');
+            } else {
+                el.innerHTML = '';
+            }
+
+            updateMineDisplay();
+        }
+
+        function chordCell(cell) {
+            if (!cell.isRevealed || cell.neighborMines === 0) return;
+
+            let flaggedCount = 0;
+            const neighbors = [];
+
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    const nr = cell.r + dr;
+                    const nc = cell.c + dc;
+                    if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols) {
+                        const neighbor = board[nr][nc];
+                        if (neighbor.isValid) {
+                            neighbors.push(neighbor);
+                            if (neighbor.isFlagged) flaggedCount++;
+                        }
+                    }
+                }
+            }
+
+            if (flaggedCount === cell.neighborMines) {
+                neighbors.forEach(n => {
+                    if (!n.isFlagged && !n.isRevealed) handleDig(n);
+                });
+            }
+        }
+
+        function detonateMine(hitCell) {
+            isGameOver = true;
+            clearInterval(timerInterval);
+            document.getElementById('face-icon').textContent = '💀';
+            playAudio('explode');
+            triggerHaptic([100, 50, 100]);
+
+            for (let r = 0; r < config.rows; r++) {
+                for (let c = 0; c < config.cols; c++) {
+                    const cell = board[r][c];
+                    if (!cell.isValid) continue;
+                    const el = document.getElementById(`cell-${r}-${c}`);
+
+                    if (cell.isMine) {
+                        el.classList.remove('cell-unrevealed');
+                        el.classList.add('cell-revealed-num');
+                        el.innerHTML = '<i class="fa-solid fa-bomb text-pink-500 text-base"></i>';
+                        if (cell === hitCell) el.classList.add('bg-red-900/80', 'border-red-500');
+                    } else if (cell.isFlagged) {
+                        el.innerHTML = '<i class="fa-solid fa-xmark text-purple-400 text-base"></i>';
+                    }
+                }
+            }
+
+            setTimeout(() => showGameOverModal(false), 500);
+        }
+
+        function checkWinCondition() {
+            if (cellsRevealed === validCellCount - config.mines) {
+                isGameOver = true;
+                clearInterval(timerInterval);
+                document.getElementById('face-icon').textContent = '👑';
+                playAudio('win');
+                triggerHaptic([50, 100, 150]);
+
+                if (currentLevel >= unlockedLevel && unlockedLevel < 100) {
+                    unlockedLevel = currentLevel + 1;
+                    localStorage.setItem('ms_puzzle_unlocked', unlockedLevel.toString());
+                }
+
+                setTimeout(() => showGameOverModal(true), 400);
+            }
+        }
+
+        function showGameOverModal(isWin) {
+            const titleEl = document.getElementById('gameover-title');
+            const msgEl = document.getElementById('gameover-message');
+            const iconEl = document.getElementById('gameover-icon');
+            const btnNext = document.getElementById('btn-next-stage');
+
+            if (isWin) {
+                iconEl.textContent = '🏆';
+                titleEl.textContent = 'STAGE CLEARED!';
+                titleEl.className = 'text-2xl font-black text-amber-400 mb-1';
+                msgEl.textContent = `You completed ${config.name} in ${timer} seconds!`;
+                btnNext.classList.remove('hidden');
+            } else {
+                iconEl.textContent = '💥';
+                titleEl.textContent = 'STAGE FAILED';
+                titleEl.className = 'text-2xl font-black text-pink-500 mb-1';
+                msgEl.textContent = 'You hit a mine. Try again!';
+                btnNext.classList.add('hidden');
+            }
+
+            document.getElementById('modal-gameover').classList.remove('hidden');
+        }
+
+        function showLevelsModal() {
+            const grid = document.getElementById('levels-grid');
+            grid.innerHTML = '';
+
+            for (let i = 1; i <= 100; i++) {
+                const btn = document.createElement('button');
+                const isUnlocked = i <= unlockedLevel;
+                const isCurrent = i === currentLevel;
+
+                let btnClass = "h-11 rounded-xl text-xs font-black flex flex-col items-center justify-center border transition-all ";
+                if (isCurrent) {
+                    btnClass += "bg-gradient-to-tr from-pink-500 to-purple-600 text-white border-pink-300 shadow-lg shadow-pink-500/30 scale-105";
+                } else if (isUnlocked) {
+                    btnClass += "bg-arcade-card hover:bg-purple-900/50 text-purple-200 border-purple-700/50";
+                } else {
+                    btnClass += "bg-black/40 text-purple-900 border-purple-950/40 cursor-not-allowed opacity-60";
+                }
+
+                btn.className = btnClass;
+                btn.innerHTML = isUnlocked ? `<span>${i}</span>` : `<i class="fa-solid fa-lock text-[10px]"></i>`;
+
+                if (isUnlocked) {
+                    btn.addEventListener('click', () => {
+                        document.getElementById('modal-levels').classList.add('hidden');
+                        loadLevel(i);
+                    });
+                }
+
+                grid.appendChild(btn);
+            }
+
+            document.getElementById('modal-levels').classList.remove('hidden');
+        }
+
+        function startTimer() {
+            timer = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timer++;
+                if (timer > 999) timer = 999;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            document.getElementById('timer-count').textContent = String(timer).padStart(3, '0') + 's';
+        }
+
+        function updateMineDisplay() {
+            const remaining = config.mines - flagsPlaced;
+            document.getElementById('mine-count').textContent = String(Math.max(-99, Math.min(999, remaining))).padStart(3, '0');
+        }
+    </script>
 </body>
 </html>
