@@ -13,7 +13,6 @@
     ::-webkit-scrollbar-track { background: #070913; }
     ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 4px; }
 
-    /* Fixed Clean Cell Sizing with horizontal/vertical scrolling support */
     .ms-cell {
       width: 38px;
       height: 38px;
@@ -132,8 +131,11 @@
           Create Room Code
         </button>
 
-        <div id="roomCodeDisplay" class="hidden p-3 bg-indigo-950/80 rounded-lg border border-indigo-800 text-xs font-mono font-bold text-amber-400 select-all cursor-pointer">
-          Room Code: <span id="codeSpan" class="text-white">Connecting...</span>
+        <div id="roomCodeDisplay" class="hidden p-3 bg-indigo-950/80 rounded-lg border border-indigo-800 text-xs font-mono font-bold text-amber-400 space-y-2">
+          <div>Room Code: <span id="codeSpan" class="text-white">Connecting...</span></div>
+          <button id="startMatchBtn" class="hidden w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded text-xs uppercase shadow">
+            Start Match Now ⚔️
+          </button>
         </div>
       </div>
 
@@ -184,7 +186,7 @@
       </div>
     </div>
 
-    <!-- Scrollable Board Viewport supporting large expert/custom grids without squishing -->
+    <!-- Scrollable Board Viewport -->
     <div id="boardViewport" class="w-full flex justify-start sm:justify-center items-start overflow-auto p-4 border border-indigo-950/80 rounded-xl bg-[#03050c]/80 backdrop-blur-md shadow-inner">
       <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl"></div>
     </div>
@@ -281,6 +283,7 @@
     const createLobbyBtn = document.getElementById('createLobbyBtn');
     const roomCodeDisplay = document.getElementById('roomCodeDisplay');
     const codeSpan = document.getElementById('codeSpan');
+    const startMatchBtn = document.getElementById('startMatchBtn');
     const joinCodeInput = document.getElementById('joinCodeInput');
     const joinLobbyBtn = document.getElementById('joinLobbyBtn');
     const lobbyContainer = document.getElementById('lobbyContainer');
@@ -336,7 +339,8 @@
       peer.on('connection', (c) => {
         conn = c;
         setupPeerEvents();
-        sendMatchStart();
+        connectionStatus.innerText = '🟢 Opponent Connected!';
+        startMatchBtn.classList.remove('hidden'); // Reveal start button once P2 is connected
       });
     };
 
@@ -353,6 +357,11 @@
       });
     };
 
+    startMatchBtn.onclick = () => {
+      if (!conn) return;
+      sendMatchStart();
+    };
+
     function setupPeerEvents() {
       conn.on('data', (data) => {
         if (data.type === 'START_MATCH') {
@@ -360,6 +369,7 @@
           lobbyContainer.classList.add('hidden');
           gameMain.classList.remove('hidden');
           gameFooter.classList.remove('hidden');
+          connectionStatus.innerText = '🟢 Live VS Match Active';
           initMatch();
         } else if (data.type === 'STATE_UPDATE') {
           oppSafeLeft = data.safeLeft;
@@ -401,6 +411,7 @@
       lobbyContainer.classList.add('hidden');
       gameMain.classList.remove('hidden');
       gameFooter.classList.remove('hidden');
+      connectionStatus.innerText = '🟢 Live VS Match Active';
 
       conn.send({ type: 'START_MATCH', config: matchConfig });
       initMatch();
@@ -555,7 +566,7 @@
         el.innerHTML = '';
         for (let dr = -1; dr <= 1; dr++) {
           for (let dc = -1; dc <= 1; dc++) {
-            if (dr !== 0 || dr !== 0) revealCell(r + dr, c + dc);
+            if (dr !== 0 || dc !== 0) revealCell(r + dr, c + dc);
           }
         }
       } else {
