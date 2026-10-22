@@ -61,7 +61,6 @@
       pointer-events: none;
     }
 
-    /* Incoming Attack Flash Animation */
     @keyframes attack-pulse {
       0% { background-color: #9f1239; box-shadow: 0 0 20px #f43f5e; }
       100% { background-color: #0d1322; }
@@ -96,14 +95,13 @@
       </div>
     </div>
 
-    <!-- Sound Toggle -->
     <button id="soundBtn" class="p-2 rounded-lg bg-indigo-950/60 border border-indigo-800/50 text-amber-400 hover:bg-indigo-900">
       <svg id="soundOnIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"/></svg>
       <svg id="soundOffIcon" class="w-5 h-5 hidden text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
     </button>
   </header>
 
-  <!-- LOBBY SETUP / CONNECTION MODAL PANEL -->
+  <!-- LOBBY SETUP PANEL -->
   <div id="lobbyContainer" class="max-w-xl mx-auto w-full p-4 space-y-4 my-auto">
     <div class="bg-[#0b0f19] border border-indigo-900/80 rounded-2xl p-6 shadow-2xl space-y-6 text-center">
       <div class="space-y-1">
@@ -111,11 +109,8 @@
         <p class="text-xs text-indigo-300/70">Play peer-to-peer real-time Minesweeper against a friend!</p>
       </div>
 
-      <!-- Option 1: Host Game -->
       <div class="bg-[#070913] p-4 rounded-xl border border-indigo-950 space-y-3">
         <h3 class="text-sm font-bold text-fuchsia-400 uppercase tracking-wider">Host a Match</h3>
-        
-        <!-- Preset Dropdown for Host -->
         <select id="presetSelect" class="w-full bg-[#0b0f19] border border-indigo-900 rounded-lg p-2 text-xs font-bold text-white">
           <option value="beginner">Beginner (9x9 - 10 Mines)</option>
           <option value="intermediate">Intermediate (16x16 - 40 Mines)</option>
@@ -124,7 +119,6 @@
           <option value="custom">Custom Configuration</option>
         </select>
 
-        <!-- Custom Params Input -->
         <div id="customInputs" class="hidden grid grid-cols-3 gap-2 text-xs">
           <input type="number" id="cRows" value="10" placeholder="Rows" class="bg-[#0b0f19] border border-indigo-900 p-1.5 rounded text-white font-bold">
           <input type="number" id="cCols" value="10" placeholder="Cols" class="bg-[#0b0f19] border border-indigo-900 p-1.5 rounded text-white font-bold">
@@ -140,7 +134,6 @@
         </div>
       </div>
 
-      <!-- Option 2: Join Room -->
       <div class="bg-[#070913] p-4 rounded-xl border border-indigo-950 space-y-3">
         <h3 class="text-sm font-bold text-indigo-300 uppercase tracking-wider">Join a Match</h3>
         <div class="flex gap-2">
@@ -153,12 +146,9 @@
     </div>
   </div>
 
-  <!-- GAMEPLAY AREA (Hidden until connected) -->
+  <!-- GAMEPLAY AREA -->
   <main id="gameMain" class="hidden flex-1 flex flex-col items-center justify-start p-2 w-full">
-    
-    <!-- Match Status & Opponent Score Bar -->
     <div class="w-full max-w-lg bg-[#0b0f19] border border-indigo-900/50 rounded-xl p-2.5 mb-2 shadow-lg space-y-2">
-      <!-- Player vs Opponent Heads-Up Display -->
       <div class="grid grid-cols-2 gap-3 text-xs font-bold border-b border-indigo-950 pb-2">
         <div class="flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
@@ -170,7 +160,6 @@
         </div>
       </div>
 
-      <!-- Controls & Counters -->
       <div class="flex items-center justify-between text-sm font-black">
         <div class="flex items-center gap-1.5 bg-[#070913] px-3 py-1 rounded-lg border border-indigo-950">
           <span class="text-rose-400 text-base">💣</span>
@@ -187,22 +176,16 @@
         </div>
       </div>
 
-      <!-- Battle Event Alert Log -->
       <div id="battleLog" class="text-[11px] font-bold text-center text-amber-300 h-4 overflow-hidden truncate">
         Match started! Correctly flag 10 mines to send an extra mine to your opponent!
       </div>
     </div>
 
-    <!-- Board Viewport -->
     <div id="boardViewport" class="w-full flex-1 min-h-[55vh] flex justify-center items-center overflow-auto p-2 border border-indigo-950/80 rounded-xl bg-[#03050c]/80 backdrop-blur-md shadow-inner">
-      <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl">
-        <!-- Cells Injected by JS -->
-      </div>
+      <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl"></div>
     </div>
-
   </main>
 
-  <!-- Mobile Floating Dig / Flag Mode Switcher -->
   <div id="gameFooter" class="hidden fixed bottom-0 left-0 w-full bg-[#0b0f19]/95 border-t border-indigo-950 p-2 backdrop-blur z-30 flex justify-center">
     <div class="flex bg-[#070913] p-1 rounded-xl border border-indigo-900 shadow-inner w-full max-w-xs">
       <button id="modeDigBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow">
@@ -214,9 +197,7 @@
     </div>
   </div>
 
-  <!-- SCRIPT LOGIC -->
   <script>
-    /* --- AUDIO SYNTHESIZER --- */
     let soundEnabled = true;
     let audioCtx = null;
 
@@ -273,12 +254,10 @@
       }
     }
 
-    /* --- PEERJS MULTIPLAYER NETWORKING --- */
     let peer = null;
     let conn = null;
     let isHost = false;
 
-    // Game Config & Seed
     let matchConfig = { type: 'beginner', rows: 9, cols: 9, mines: 10, seed: 12345, shapeGrid: null };
     let board = [];
     let gameStatus = 'waiting';
@@ -287,15 +266,12 @@
     let correctFlags = 0;
     let lastAttackMilestone = 0;
     let isFlagMode = false;
-
     let oppSafeLeft = 0;
 
-    // Touch Handling
     let touchTimer = null, touchStartX = 0, touchStartY = 0;
     let isLongPressTriggered = false;
     const LONG_PRESS_MS = 280, TOUCH_MOVE_THRESHOLD = 10;
 
-    // DOM Elements
     const presetSelect = document.getElementById('presetSelect');
     const customInputs = document.getElementById('customInputs');
     const createLobbyBtn = document.getElementById('createLobbyBtn');
@@ -323,7 +299,6 @@
       customInputs.classList.toggle('hidden', presetSelect.value !== 'custom');
     };
 
-    /* Generate Procedural Random Shape Matrix */
     function generateRandomShapeGrid(rows, cols) {
       let grid = [];
       const shapeType = Math.floor(Math.random() * 4);
@@ -333,10 +308,10 @@
           let nx = (c / (cols - 1)) * 2 - 1, ny = (r / (rows - 1)) * 2 - 1;
           let dist = Math.hypot(nx, ny);
           let valid = true;
-          if (shapeType === 0 && (dist < 0.3 || dist > 0.95)) valid = false; // Donut
-          else if (shapeType === 1 && Math.abs(nx) > 0.45 && Math.abs(ny) > 0.45) valid = false; // Cross
-          else if (shapeType === 2 && Math.abs(nx) + Math.abs(ny) > 1.2) valid = false; // Diamond
-          else if (shapeType === 3 && nx > 0.15 && ny < -0.15) valid = false; // Corner L
+          if (shapeType === 0 && (dist < 0.3 || dist > 0.95)) valid = false;
+          else if (shapeType === 1 && Math.abs(nx) > 0.45 && Math.abs(ny) > 0.45) valid = false;
+          else if (shapeType === 2 && Math.abs(nx) + Math.abs(ny) > 1.2) valid = false;
+          else if (shapeType === 3 && nx > 0.15 && ny < -0.15) valid = false;
           row.push(valid);
         }
         grid.push(row);
@@ -344,7 +319,6 @@
       return grid;
     }
 
-    /* HOST GAME ROOM */
     createLobbyBtn.onclick = () => {
       isHost = true;
       const roomCode = 'vs-' + Math.floor(1000 + Math.random() * 9000);
@@ -362,7 +336,6 @@
       });
     };
 
-    /* JOIN GAME ROOM */
     joinLobbyBtn.onclick = () => {
       isHost = false;
       const code = joinCodeInput.value.trim().toLowerCase();
@@ -378,14 +351,15 @@
     function setupPeerEvents() {
       conn.on('open', () => {
         connectionStatus.innerText = '🟢 Connected to Opponent!';
-        lobbyContainer.classList.add('hidden');
-        gameMain.classList.remove('hidden');
-        gameFooter.classList.remove('hidden');
       });
 
       conn.on('data', (data) => {
         if (data.type === 'START_MATCH') {
           matchConfig = data.config;
+          // Ensure UI switches for joiner when configuration is received
+          lobbyContainer.classList.add('hidden');
+          gameMain.classList.remove('hidden');
+          gameFooter.classList.remove('hidden');
           initMatch();
         } else if (data.type === 'STATE_UPDATE') {
           oppSafeLeft = data.safeLeft;
@@ -423,11 +397,16 @@
       }
 
       matchConfig = { type, rows: r, cols: c, mines: m, seed: Math.floor(Math.random() * 999999), shapeGrid };
+      
+      // Host shifts UI views immediately
+      lobbyContainer.classList.add('hidden');
+      gameMain.classList.remove('hidden');
+      gameFooter.classList.remove('hidden');
+
       conn.send({ type: 'START_MATCH', config: matchConfig });
       initMatch();
     }
 
-    /* INITIALIZE VS BOARD */
     function initMatch() {
       gameStatus = 'playing';
       firstClick = true;
@@ -537,7 +516,6 @@
           }
           board[r][c].count = cnt;
 
-          // Dynamically refresh revealed cell numbers if updated by attack mine
           if (board[r][c].revealed) {
             const el = document.getElementById(`cell-${r}-${c}`);
             if (el) {
@@ -554,7 +532,6 @@
       }
     }
 
-    /* --- GAME MECHANICS --- */
     function handleCellClick(r, c) {
       if (gameStatus !== 'playing') return;
       if (isFlagMode) return toggleFlag(r, c);
@@ -618,7 +595,6 @@
       const el = document.getElementById(`cell-${r}-${c}`);
       if (el) el.innerText = cell.flagged ? '🚩' : '';
 
-      // Check correct flag attacks
       recountCorrectFlags();
       updateCounters();
       sendStateUpdate();
@@ -634,7 +610,6 @@
       correctFlags = count;
       correctFlagsDisplay.innerText = `${correctFlags}/10`;
 
-      // Trigger 10-Bomb Attack Payload
       const milestone = Math.floor(correctFlags / 10);
       if (milestone > lastAttackMilestone) {
         lastAttackMilestone = milestone;
@@ -644,9 +619,7 @@
       }
     }
 
-    /* INCOMING ATTACK MINE MECHANIC */
     function receiveAttackMine() {
-      // Find open non-mined cells
       let candidates = [];
       for (let r = 0; r < matchConfig.rows; r++) {
         for (let c = 0; c < matchConfig.cols; c++) {
@@ -724,7 +697,6 @@
       mineCountDisplay.innerText = String(matchConfig.mines - flagsPlaced).padStart(3, '0');
     }
 
-    /* --- TOUCH LONG PRESS --- */
     function handleTouchStart(e, r, c) {
       initAudio();
       touchStartX = e.touches[0].clientX;
@@ -755,7 +727,6 @@
       if (isLongPressTriggered) e.preventDefault();
     }
 
-    /* --- CONTROLS --- */
     modeDigBtn.onclick = () => {
       isFlagMode = false;
       modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow";
