@@ -6,28 +6,26 @@
   <title>Minesweeper - Speed Run Mode</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Prevent default gestures on web canvas */
     * { touch-action: manipulation; -webkit-touch-callout: none; }
     
-    /* Custom Scrollbars */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #070913; }
     ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #312e81; }
 
-    /* Cyber/Synthwave Cell Base Styling */
+    /* Dynamic Cell Sizing: Scales dynamically to fit screen space */
     .ms-cell {
-      width: 38px;
-      height: 38px;
-      min-width: 38px;
-      min-height: 38px;
+      width: var(--cell-size, 48px);
+      height: var(--cell-size, 48px);
+      min-width: var(--cell-size, 48px);
+      min-height: var(--cell-size, 48px);
       font-weight: 800;
-      font-size: 1.15rem;
+      font-size: calc(var(--cell-size, 48px) * 0.52);
       user-select: none;
       transition: background-color 0.1s, transform 0.05s, border-color 0.1s;
     }
 
-    /* Cyber Unrevealed Cell: Deep obsidian/indigo bevel with glowing purple edges */
+    /* Cyber Unrevealed Cell */
     .ms-unrevealed {
       background: linear-gradient(135deg, #1e1b4b, #0f172a);
       border-top: 2px solid #6366f1;
@@ -42,7 +40,6 @@
       background: #0f172a;
     }
 
-    /* Long-press active indicator glow */
     .ms-pressing {
       background: #831843 !important;
       border-color: #f43f5e !important;
@@ -50,7 +47,7 @@
       transform: scale(0.92);
     }
 
-    /* Revealed Empty (0) Cell - Deep sunken inset dark background */
+    /* Revealed Empty (0) Cell */
     .ms-revealed-zero {
       background: #0b0f19;
       border: 1px solid #111827;
@@ -64,17 +61,15 @@
       box-shadow: inset 2px 2px 4px rgba(0,0,0,0.7);
     }
 
-    /* Standard Classic & Cyber High-Contrast Number colors */
-    .num-1 { color: #38bdf8; text-shadow: 0 0 8px rgba(56, 189, 248, 0.4); } /* Sky Blue */
-    .num-2 { color: #4ade80; text-shadow: 0 0 8px rgba(74, 222, 128, 0.4); } /* Neon Green */
-    .num-3 { color: #f87171; text-shadow: 0 0 8px rgba(248, 113, 113, 0.4); } /* Bright Red */
-    .num-4 { color: #c084fc; text-shadow: 0 0 8px rgba(192, 132, 252, 0.4); } /* Neon Purple */
-    .num-5 { color: #fbbf24; } /* Amber */
-    .num-6 { color: #2dd4bf; } /* Teal */
-    .num-7 { color: #f472b6; } /* Pink */
-    .num-8 { color: #94a3b8; } /* Slate */
+    .num-1 { color: #38bdf8; text-shadow: 0 0 8px rgba(56, 189, 248, 0.4); }
+    .num-2 { color: #4ade80; text-shadow: 0 0 8px rgba(74, 222, 128, 0.4); }
+    .num-3 { color: #f87171; text-shadow: 0 0 8px rgba(248, 113, 113, 0.4); }
+    .num-4 { color: #c084fc; text-shadow: 0 0 8px rgba(192, 132, 252, 0.4); }
+    .num-5 { color: #fbbf24; }
+    .num-6 { color: #2dd4bf; }
+    .num-7 { color: #f472b6; }
+    .num-8 { color: #94a3b8; }
 
-    /* Pulse animation for timer under 5 seconds */
     @keyframes pulse-danger {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.8; transform: scale(1.04); }
@@ -87,7 +82,7 @@
 <body class="h-full flex flex-col justify-between overflow-x-hidden">
 
   <!-- Top Header Bar -->
-  <header class="bg-[#0b0f19] border-b border-indigo-950/80 px-4 py-2.5 flex items-center justify-between shadow-lg z-20 shrink-0">
+  <header class="bg-[#0b0f19] border-b border-indigo-950/80 px-4 py-2 flex items-center justify-between shadow-lg z-20 shrink-0">
     <div class="flex items-center gap-3">
       <a href="index.html" class="p-2 rounded-lg bg-indigo-950/60 border border-indigo-800/50 hover:bg-indigo-900/80 text-indigo-300 hover:text-white transition" title="Back to Classic Mode">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
@@ -102,12 +97,10 @@
 
     <!-- Right Controls -->
     <div class="flex items-center gap-2">
-      <!-- Mute/Sound Toggle -->
       <button id="soundBtn" class="p-2 rounded-lg bg-indigo-950/60 border border-indigo-800/50 text-amber-400 transition hover:bg-indigo-900" title="Toggle Sound">
         <svg id="soundOnIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"/></svg>
         <svg id="soundOffIcon" class="w-5 h-5 hidden text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
       </button>
-      <!-- Stats Modal Button -->
       <button id="statsBtn" class="p-2 rounded-lg bg-indigo-950/60 border border-indigo-800/50 text-indigo-200 hover:text-white transition hover:bg-indigo-900" title="Speed Records">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       </button>
@@ -115,8 +108,7 @@
   </header>
 
   <!-- Level & Tier Selection Dashboard -->
-  <div class="max-w-4xl mx-auto w-full px-3 py-2 space-y-2 shrink-0">
-    <!-- Difficulty Tabs -->
+  <div class="max-w-4xl mx-auto w-full px-3 py-1.5 space-y-1.5 shrink-0">
     <div class="flex bg-[#0b0f19] p-1 rounded-xl border border-indigo-950 gap-1 text-xs font-bold">
       <button class="diff-tab flex-1 py-1.5 rounded-lg transition text-indigo-300 hover:text-white" data-diff="beginner">Beginner</button>
       <button class="diff-tab flex-1 py-1.5 rounded-lg transition text-indigo-300 hover:text-white" data-diff="intermediate">Intermediate</button>
@@ -124,78 +116,70 @@
       <button class="diff-tab flex-1 py-1.5 rounded-lg transition text-indigo-300 hover:text-white" data-diff="custom">Custom</button>
     </div>
 
-    <!-- Tier Challenge Selector Cards (Bronze / Silver / Gold) -->
-    <div id="tierSelectorContainer" class="grid grid-cols-3 gap-2">
-      <!-- Injected via JS -->
-    </div>
+    <div id="tierSelectorContainer" class="grid grid-cols-3 gap-2"></div>
 
-    <!-- Custom Tier Setup Form -->
-    <div id="customControls" class="hidden bg-[#0b0f19] border border-indigo-900/60 p-3 rounded-xl text-xs space-y-2">
+    <div id="customControls" class="hidden bg-[#0b0f19] border border-indigo-900/60 p-2.5 rounded-xl text-xs space-y-2">
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <div>
-          <label class="block text-indigo-300/80 mb-1">Rows (5-30)</label>
-          <input type="number" id="custRows" value="10" min="5" max="30" class="w-full bg-[#070913] border border-indigo-900 rounded p-1.5 text-white font-bold">
+          <label class="block text-indigo-300/80 mb-0.5">Rows (5-30)</label>
+          <input type="number" id="custRows" value="10" min="5" max="30" class="w-full bg-[#070913] border border-indigo-900 rounded p-1 text-white font-bold">
         </div>
         <div>
-          <label class="block text-indigo-300/80 mb-1">Cols (5-30)</label>
-          <input type="number" id="custCols" value="10" min="5" max="30" class="w-full bg-[#070913] border border-indigo-900 rounded p-1.5 text-white font-bold">
+          <label class="block text-indigo-300/80 mb-0.5">Cols (5-30)</label>
+          <input type="number" id="custCols" value="10" min="5" max="30" class="w-full bg-[#070913] border border-indigo-900 rounded p-1 text-white font-bold">
         </div>
         <div>
-          <label class="block text-indigo-300/80 mb-1">Mines</label>
-          <input type="number" id="custMines" value="12" min="1" class="w-full bg-[#070913] border border-indigo-900 rounded p-1.5 text-white font-bold">
+          <label class="block text-indigo-300/80 mb-0.5">Mines</label>
+          <input type="number" id="custMines" value="12" min="1" class="w-full bg-[#070913] border border-indigo-900 rounded p-1 text-white font-bold">
         </div>
         <div>
-          <label class="block text-indigo-300/80 mb-1">Time Limit (s)</label>
-          <input type="number" id="custTime" value="45" min="5" max="999" class="w-full bg-[#070913] border border-indigo-900 rounded p-1.5 text-amber-400 font-bold">
+          <label class="block text-indigo-300/80 mb-0.5">Time Limit (s)</label>
+          <input type="number" id="custTime" value="45" min="5" max="999" class="w-full bg-[#070913] border border-indigo-900 rounded p-1 text-amber-400 font-bold">
         </div>
       </div>
-      <button id="startCustomBtn" class="w-full py-1.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white font-black tracking-wider rounded-lg uppercase shadow">
+      <button id="startCustomBtn" class="w-full py-1.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white font-black tracking-wider rounded-lg uppercase shadow">
         Start Custom Challenge
       </button>
     </div>
   </div>
 
-  <!-- Game Container & Large 80%+ Viewport -->
+  <!-- Game Container -->
   <main class="flex-1 flex flex-col items-center justify-start p-2 w-full overflow-hidden min-h-0">
     
     <!-- Counters & Time Bar -->
-    <div class="w-full max-w-lg bg-[#0b0f19] border border-indigo-900/50 rounded-xl p-2.5 mb-2 shadow-lg space-y-2 shrink-0">
+    <div class="w-full max-w-lg bg-[#0b0f19] border border-indigo-900/50 rounded-xl p-2 mb-2 shadow-lg space-y-1.5 shrink-0">
       <div class="flex items-center justify-between text-sm font-black">
-        <!-- Mine Counter -->
         <div class="flex items-center gap-2 bg-[#070913] px-3 py-1 rounded-lg border border-indigo-950">
           <span class="text-rose-400 text-base">💣</span>
           <span id="mineCountDisplay" class="font-mono text-lg text-indigo-100">000</span>
         </div>
 
-        <!-- Reset / Face Button -->
         <button id="resetBtn" class="px-4 py-1 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 rounded-lg text-xl transition active:scale-95 shadow-md">
           😎
         </button>
 
-        <!-- Countdown Timer Display -->
         <div id="timerContainer" class="flex items-center gap-2 bg-[#070913] px-3 py-1 rounded-lg border border-indigo-950">
           <span class="text-amber-400 text-base">⏱️</span>
           <span id="timerDisplay" class="font-mono text-lg text-amber-400 font-bold">00.0</span>
         </div>
       </div>
 
-      <!-- Time Progress Bar -->
-      <div class="w-full h-2.5 bg-[#070913] rounded-full overflow-hidden border border-indigo-950">
+      <div class="w-full h-2 bg-[#070913] rounded-full overflow-hidden border border-indigo-950">
         <div id="timeProgressBar" class="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 w-full transition-all duration-100 ease-linear"></div>
       </div>
     </div>
 
-    <!-- Expand Viewport to ~80% Screen Height -->
-    <div id="boardViewport" class="w-full flex-1 flex justify-start sm:justify-center items-start overflow-auto p-2 border border-indigo-950/80 rounded-xl bg-[#03050c]/80 backdrop-blur-md shadow-inner">
-      <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl">
-        <!-- Cells generated by JS -->
+    <!-- Maximized Board Viewport -->
+    <div id="boardViewport" class="w-full flex-1 flex justify-center items-center overflow-auto p-2 border border-indigo-950/80 rounded-xl bg-[#03050c]/80 backdrop-blur-md shadow-inner min-h-0">
+      <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl transition-all">
+        <!-- Dynamic cells -->
       </div>
     </div>
 
   </main>
 
   <!-- Mobile Floating Dig / Flag Mode Switcher Bar -->
-  <div class="sticky bottom-0 w-full bg-[#0b0f19]/95 border-t border-indigo-950 p-2.5 backdrop-blur z-20 flex justify-center shrink-0">
+  <div class="sticky bottom-0 w-full bg-[#0b0f19]/95 border-t border-indigo-950 p-2 backdrop-blur z-20 flex justify-center shrink-0">
     <div class="flex bg-[#070913] p-1 rounded-xl border border-indigo-900 shadow-inner w-full max-w-xs">
       <button id="modeDigBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow">
         <span>⛏️</span> DIG MODE
@@ -212,24 +196,17 @@
       <button id="closeStatsBtn" class="absolute top-4 right-4 text-indigo-400 hover:text-white p-1">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
-
       <h2 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-amber-400 flex items-center gap-2">
         <span>🏆</span> Speed Run Medals & Records
       </h2>
-
-      <div id="modalRecordsList" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-        <!-- Injected via JS -->
-      </div>
+      <div id="modalRecordsList" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1"></div>
     </div>
   </div>
 
-  <!-- JavaScript Logic -->
   <script>
-    /* --- GAME CONFIGURATIONS & MEDALS DATA --- */
     const PRESETS = {
       beginner: {
-        name: 'Beginner',
-        rows: 9, cols: 9, mines: 10,
+        name: 'Beginner', rows: 9, cols: 9, mines: 10,
         tiers: {
           bronze: { id: 'b_bronze', name: 'Bronze', time: 45, icon: '🥉', color: 'border-amber-700/60 bg-amber-950/20' },
           silver: { id: 'b_silver', name: 'Silver', time: 30, icon: '🥈', color: 'border-slate-500/60 bg-slate-900/30' },
@@ -237,8 +214,7 @@
         }
       },
       intermediate: {
-        name: 'Intermediate',
-        rows: 16, cols: 16, mines: 40,
+        name: 'Intermediate', rows: 16, cols: 16, mines: 40,
         tiers: {
           bronze: { id: 'i_bronze', name: 'Bronze', time: 120, icon: '🥉', color: 'border-amber-700/60 bg-amber-950/20' },
           silver: { id: 'i_silver', name: 'Silver', time: 80,  icon: '🥈', color: 'border-slate-500/60 bg-slate-900/30' },
@@ -246,8 +222,7 @@
         }
       },
       expert: {
-        name: 'Expert',
-        rows: 16, cols: 30, mines: 99,
+        name: 'Expert', rows: 16, cols: 30, mines: 99,
         tiers: {
           bronze: { id: 'e_bronze', name: 'Bronze', time: 240, icon: '🥉', color: 'border-amber-700/60 bg-amber-950/20' },
           silver: { id: 'e_silver', name: 'Silver', time: 160, icon: '🥈', color: 'border-slate-500/60 bg-slate-900/30' },
@@ -256,12 +231,10 @@
       }
     };
 
-    /* --- STATE VARIABLES --- */
     let currentDifficulty = 'beginner';
     let currentTierKey = 'bronze';
     let rows = 9, cols = 9, mineCount = 10;
-    let targetTime = 45;
-    let remainingTime = 45;
+    let targetTime = 45, remainingTime = 45;
 
     let board = [];
     let gameStatus = 'ready';
@@ -288,7 +261,6 @@
       localStorage.setItem('ms_speed_data', JSON.stringify(speedData));
     }
 
-    /* --- SYNTHESIZED SOUNDS --- */
     function initAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -346,8 +318,8 @@
       }
     }
 
-    /* --- DOM ELEMENTS --- */
     const boardGrid = document.getElementById('boardGrid');
+    const boardViewport = document.getElementById('boardViewport');
     const mineCountDisplay = document.getElementById('mineCountDisplay');
     const timerDisplay = document.getElementById('timerDisplay');
     const timeProgressBar = document.getElementById('timeProgressBar');
@@ -362,7 +334,24 @@
     const closeStatsBtn = document.getElementById('closeStatsBtn');
     const modalRecordsList = document.getElementById('modalRecordsList');
 
-    /* --- DASHBOARD & SETUP --- */
+    function updateCellSizing() {
+      if (!boardViewport) return;
+      const availWidth = boardViewport.clientWidth - 32;
+      const availHeight = boardViewport.clientHeight - 32;
+
+      // Calculate ideal size based on cols vs rows
+      const sizeFromWidth = Math.floor(availWidth / cols);
+      const sizeFromHeight = Math.floor(availHeight / rows);
+      
+      // Choose maximum fitting size (capped between 36px and 64px)
+      let calculatedSize = Math.min(sizeFromWidth, sizeFromHeight);
+      calculatedSize = Math.max(36, Math.min(64, calculatedSize));
+
+      document.documentElement.style.setProperty('--cell-size', `${calculatedSize}px`);
+    }
+
+    window.addEventListener('resize', updateCellSizing);
+
     function renderTierSelector() {
       tierSelectorContainer.innerHTML = '';
       if (currentDifficulty === 'custom') {
@@ -384,18 +373,18 @@
         const bestTime = speedData.records[tier.id];
 
         const card = document.createElement('button');
-        card.className = `p-2.5 rounded-xl border text-left transition flex flex-col justify-between relative overflow-hidden ${tier.color} ${
+        card.className = `p-2 rounded-xl border text-left transition flex flex-col justify-between relative overflow-hidden ${tier.color} ${
           isSelected ? 'ring-2 ring-fuchsia-400 border-fuchsia-400 scale-[1.02]' : 'opacity-85 hover:opacity-100'
         } ${!isUnlocked ? 'opacity-40 grayscale cursor-not-allowed' : ''}`;
 
         card.innerHTML = `
           <div class="flex items-center justify-between w-full mb-0.5">
-            <span class="text-lg">${tier.icon}</span>
+            <span class="text-base">${tier.icon}</span>
             <span class="font-mono text-xs font-bold text-amber-400">${tier.time}s</span>
           </div>
           <div>
-            <div class="font-black text-[11px] uppercase tracking-wider text-indigo-100">${tier.name}</div>
-            <div class="text-[10px] text-indigo-300/70 font-medium">${bestTime ? 'Best: ' + bestTime.toFixed(1) + 's' : (isUnlocked ? 'Not beaten' : 'Locked')}</div>
+            <div class="font-black text-[10px] uppercase tracking-wider text-indigo-100">${tier.name}</div>
+            <div class="text-[9px] text-indigo-300/70 font-medium">${bestTime ? 'Best: ' + bestTime.toFixed(1) + 's' : (isUnlocked ? 'Not beaten' : 'Locked')}</div>
           </div>
           ${!isUnlocked ? `<div class="absolute inset-0 bg-[#070913]/80 backdrop-blur-[1px] flex items-center justify-center font-bold text-xs text-indigo-300">🔒 Locked</div>` : ''}
         `;
@@ -427,6 +416,7 @@
         targetTime = preset.tiers[currentTierKey].time;
       }
       remainingTime = targetTime;
+      updateCellSizing();
     }
 
     document.querySelectorAll('.diff-tab').forEach(tab => {
@@ -451,7 +441,6 @@
       resetGame();
     };
 
-    /* --- BOARD GENERATION & ENGINE --- */
     function resetGame() {
       clearInterval(timerInterval);
       gameStatus = 'ready';
@@ -478,6 +467,7 @@
     }
 
     function renderGrid() {
+      updateCellSizing();
       boardGrid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
       boardGrid.innerHTML = '';
 
@@ -535,7 +525,6 @@
       }
     }
 
-    /* --- INTERACTIONS --- */
     function handleCellClick(r, c) {
       if (gameStatus === 'won' || gameStatus === 'lost') return;
       if (isFlagMode) {
@@ -646,7 +635,6 @@
       if (isLongPressTriggered) e.preventDefault();
     }
 
-    /* --- COUNTDOWN & ENDGAME --- */
     function startCountdown() {
       gameStatus = 'playing';
       const startTime = Date.now();
@@ -742,7 +730,6 @@
       mineCountDisplay.innerText = String(remainingMines).padStart(3, '0');
     }
 
-    /* --- CONTROLS & MODALS --- */
     modeDigBtn.onclick = () => {
       isFlagMode = false;
       modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow";
@@ -798,7 +785,6 @@
 
     closeStatsBtn.onclick = () => statsModal.classList.add('hidden');
 
-    // Launch initial tab
     document.querySelector('.diff-tab[data-diff="beginner"]').click();
   </script>
 </body>
