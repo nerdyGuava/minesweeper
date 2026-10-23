@@ -13,6 +13,12 @@
     ::-webkit-scrollbar-track { background: #070913; }
     ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 4px; }
 
+    /* Enable smooth diagonal scroll panning */
+    #boardViewport {
+      touch-action: pan-x pan-y;
+      -webkit-overflow-scrolling: touch;
+    }
+
     /* Enforce strict un-squishable square cells */
     .ms-cell {
       width: 40px;
@@ -189,7 +195,7 @@
       </div>
     </div>
 
-    <!-- Scrollable Board Viewport -->
+    <!-- Free-flowing 360-degree Diagonal Scroll Viewport -->
     <div id="boardViewport" class="w-full flex justify-start sm:justify-center items-start overflow-auto p-4 border border-indigo-950/80 rounded-xl bg-[#03050c]/80 backdrop-blur-md shadow-inner">
       <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl shrink-0"></div>
     </div>
@@ -601,7 +607,7 @@
         el.innerHTML = '';
         for (let dr = -1; dr <= 1; dr++) {
           for (let dc = -1; dc <= 1; dc++) {
-            if (dr !== 0 || dr !== 0) revealCell(r + dr, c + dc);
+            if (dr !== 0 || dc !== 0) revealCell(r + dr, c + dc);
           }
         }
       } else {
