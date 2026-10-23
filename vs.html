@@ -7,15 +7,14 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
+    /* Removed global touch-action constraint to allow completely free diagonal mobile scrolling */
     * { -webkit-touch-callout: none; }
     
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #070913; }
     ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 4px; }
 
-    /* Fully unlock smooth 360-degree diagonal panning on mobile */
     #boardViewport {
-      touch-action: pan-x pan-y pinch-zoom;
       -webkit-overflow-scrolling: touch;
       overflow: auto;
     }
@@ -195,7 +194,7 @@
       </div>
     </div>
 
-    <!-- Scrollable Board Viewport with Full Diagonal Freedom -->
+    <!-- Scrollable Board Viewport with Unrestricted 360-degree Panning -->
     <div id="boardViewport" class="w-full flex justify-start sm:justify-center items-start overflow-auto p-4 border border-indigo-950/80 rounded-xl bg-[#03050c]/80 backdrop-blur-md shadow-inner">
       <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl shrink-0"></div>
     </div>
