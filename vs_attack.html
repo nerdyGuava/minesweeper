@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en" class="min-h-full bg-[#070913] text-slate-100 select-none">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Minesweeper - 1v1 Rainbow Attack Mode</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <style>
+    * { -webkit-touch-callout: none; }
+    
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #070913; }
+    ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 4px; }
+
+    #boardViewport {
+      -webkit-overflow-scrolling: touch;
+      overflow: auto;
+    }
+
+    .ms-cell {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      min-height: 40px;
+      aspect-ratio: 1 / 1;
+      font-weight: 800;
+      font-size: 1.15rem;
+      user-select: none;
+      transition: background-color 0.1s, transform 0.05s;
+    }
+
+    .ms-unrevealed {
+      background: linear-gradient(135deg, #1e1b4b, #0f172a);
+      border-top: 2px solid #6366f1;
+      border-left: 2px solid #6366f1;
+      border-right: 2px solid #030712;
+      border-bottom: 2px solid #030712;
+      box-shadow: 0 0 6px rgba(99, 102, 241, 0.25);
+    }
+    
+    .ms-unrevealed:active { transform: scale(0.93); background: #0f172a; }
+
+    .ms-pressing {
+      background: #831843 !important;
+      border-color: #f43f5e !important;
+      box-shadow: 0 0 16px #f43f5e !important;
+      transform: scale(0.92);
+    }
+
+    .ms-revealed-zero {
+      background: #0b0f19;
+      border: 1px solid #111827;
+      box-shadow: inset 3px 3px 6px rgba(0,0,0,0.9);
+    }
+
+    .ms-revealed-num {
+      background: #0d1322;
+      border: 1px solid #1e1b4b;
+      box-shadow: inset 2px 2px 4px rgba(0,0,0,0.7);
+    }
+
+    .ms-void {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      min-height: 40px;
+      aspect-ratio: 1 / 1;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    @keyframes rainbow-glow {
+      0% { background: linear-gradient(135deg, #ef4444, #f97316); box-shadow: 0 0 12px #ef4444; }
+      33% { background: linear-gradient(135deg, #10b981, #06b6d4); box-shadow: 0 0 12px #10b981; }
+      66% { background: linear-gradient(135deg, #6366f1, #a855f7); box-shadow: 0 0 12px #a855f7; }
+      100% { background: linear-gradient(135deg, #ef4444, #f97316); box-shadow: 0 0 12px #ef4444; }
+    }
+    .ms-rainbow {
+      animation: rainbow-glow 2s infinite linear;
+      border-color: #f3e8ff !important;
+    }
+
+    @keyframes attack-pulse {
+      0% { background-color: #9f1239; box-shadow: 0 0 20px #f43f5e; }
+      100% { background-color: #0d1322; }
+    }
+    .animate-attack {
+      animation: attack-pulse 1.2s ease-out;
+    }
+
+    .num-1 { color: #38bdf8; text-shadow: 0 0 8px rgba(56, 189, 248, 0.4); }
+    .num-2 { color: #4ade80; text-shadow: 0 0 8px rgba(74, 222, 128, 0.4); }
+    .num-3 { color: #f87171; text-shadow: 0 0 8px rgba(248, 113, 113, 0.4); }
+    .num-4 { color: #c084fc; text-shadow: 0 0 8px rgba(192, 132, 252, 0.4); }
+    .num-5 { color: #fbbf24; }
+    .num-6 { color: #2dd4bf; }
+    .num-7 { color: #f472b6; }
+    .num-8 { color: #94a3b8; }
+  </style>
+</head>
+<body class="min-h-full flex flex-col justify-between overflow-y-auto pb-20">
+
+  <!-- Header -->
+  <header class="bg-[#0b0f19] border-b border-indigo-950 px-4 py-2 flex items-center justify-between shadow-lg relative z-10">
+    <div class="flex items-center gap-3">
+      <a href="hub.html" class="px-3 py-1.5 rounded-lg bg-indigo-950/60 border border-indigo-800/50 hover:bg-indigo-900/80 text-indigo-300 hover:text-white transition text-xs font-bold flex items-center gap-1.5">
+        <span>🎮</span> <span>All Modes</span>
+      </a>
+      <div>
+        <h1 class="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-fuchsia-400 to-amber-400 drop-shadow">
+          🌈 1v1 RAINBOW ATTACK
+        </h1>
+        <p id="connectionStatus" class="text-[10px] text-slate-400 font-bold">Offline • Connect or Host a Lobby</p>
+      </div>
+    </div>
+
+    <button id="soundBtn" class="p-2 rounded-lg bg-indigo-950/60 border border-indigo-800/50 text-amber-400 hover:bg-indigo-900">
+      <svg id="soundOnIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"/></svg>
+      <svg id="soundOffIcon" class="w-5 h-5 hidden text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
+    </button>
+  </header>
+
+  <!-- LOBBY SETUP PANEL -->
+  <div id="lobbyContainer" class="max-w-xl mx-auto w-full p-4 space-y-4 my-auto">
+    <div class="bg-[#0b0f19] border border-indigo-900/80 rounded-2xl p-6 shadow-2xl space-y-6 text-center">
+      <div class="space-y-1">
+        <h2 class="text-2xl font-black text-white">Rainbow Attack Lobby</h2>
+        <p class="text-xs text-indigo-300/70">Capture rainbow squares to blast your opponent with 3 extra mines!</p>
+      </div>
+
+      <div class="bg-[#070913] p-4 rounded-xl border border-indigo-950 space-y-3">
+        <h3 class="text-sm font-bold text-fuchsia-400 uppercase tracking-wider">Host a Match</h3>
+        <select id="presetSelect" class="w-full bg-[#0b0f19] border border-indigo-900 rounded-lg p-2 text-xs font-bold text-white">
+          <option value="beginner">Beginner (9x9 - 10 Mines)</option>
+          <option value="intermediate">Intermediate (16x16 - 40 Mines)</option>
+          <option value="expert">Expert (16x30 - 99 Mines)</option>
+          <option value="shape">Random Puzzle Shape (Dynamic)</option>
+          <option value="custom">Custom Configuration</option>
+        </select>
+
+        <div id="customInputs" class="hidden grid grid-cols-3 gap-2 text-xs">
+          <input type="number" id="cRows" value="10" placeholder="Rows" class="bg-[#0b0f19] border border-indigo-900 p-1.5 rounded text-white font-bold">
+          <input type="number" id="cCols" value="10" placeholder="Cols" class="bg-[#0b0f19] border border-indigo-900 p-1.5 rounded text-white font-bold">
+          <input type="number" id="cMines" value="15" placeholder="Mines" class="bg-[#0b0f19] border border-indigo-900 p-1.5 rounded text-white font-bold">
+        </div>
+
+        <button id="createLobbyBtn" class="w-full py-2.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white font-black rounded-lg text-xs tracking-wider uppercase shadow">
+          Create Room Code
+        </button>
+
+        <div id="roomCodeDisplay" class="hidden p-3 bg-indigo-950/80 rounded-lg border border-indigo-800 text-xs font-mono font-bold text-amber-400 space-y-2">
+          <div>Room Code: <span id="codeSpan" class="text-white">Connecting...</span></div>
+          <button id="startMatchBtn" class="hidden w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded text-xs uppercase shadow">
+            Start Match Now ⚔️
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-[#070913] p-4 rounded-xl border border-indigo-950 space-y-3">
+        <h3 class="text-sm font-bold text-indigo-300 uppercase tracking-wider">Join a Match</h3>
+        <div class="flex gap-2">
+          <input type="text" id="joinCodeInput" placeholder="Enter Room Code (e.g. vsa-4892)" class="flex-1 bg-[#0b0f19] border border-indigo-900 rounded-lg px-3 py-2 text-xs font-mono font-bold text-white uppercase">
+          <button id="joinLobbyBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs uppercase">
+            Join
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAMEPLAY AREA -->
+  <main id="gameMain" class="hidden flex-1 flex flex-col items-center justify-start p-2 w-full">
+    <div class="w-full max-w-lg bg-[#0b0f19] border border-indigo-900/50 rounded-xl p-2.5 mb-2 shadow-lg space-y-2 relative z-20">
+      <div class="grid grid-cols-2 gap-3 text-xs font-bold border-b border-indigo-950 pb-2">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          <span>YOU: <span id="mySafeLeft" class="text-emerald-400 font-mono">00</span> safe left</span>
+        </div>
+        <div class="flex items-center gap-2 justify-end">
+          <span>OPPONENT: <span id="oppSafeLeft" class="text-rose-400 font-mono">00</span> safe left</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-sm font-black">
+        <div class="flex items-center gap-1.5 bg-[#070913] px-3 py-1 rounded-lg border border-indigo-950">
+          <span class="text-rose-400 text-base">💣</span>
+          <span id="mineCountDisplay" class="font-mono text-indigo-100">000</span>
+        </div>
+
+        <button id="resetBtn" class="px-4 py-1 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 rounded-lg text-xl active:scale-95 shadow">
+          ⚔️
+        </button>
+
+        <div class="flex items-center gap-1.5 bg-[#070913] px-3 py-1 rounded-lg border border-indigo-950">
+          <span class="text-amber-400 text-base">🚩</span>
+          <span id="correctFlagsDisplay" class="font-mono text-amber-400">0/10</span>
+        </div>
+      </div>
+
+      <div id="battleLog" class="text-[11px] font-bold text-center text-amber-300 h-4 overflow-hidden truncate">
+        Rainbow Attack started! Capture rainbow squares to blast your opponent!
+      </div>
+    </div>
+
+    <!-- Scrollable Board Viewport -->
+    <div id="boardViewport" class="w-full flex justify-start sm:justify-center items-start overflow-auto p-4 border border-indigo-950/80 rounded-xl bg-[#03050c]/80 backdrop-blur-md shadow-inner">
+      <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl shrink-0"></div>
+    </div>
+  </main>
+
+  <!-- MATCH RESULT OVERLAY MODAL -->
+  <div id="resultModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#0b0f19] border border-indigo-900/80 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center space-y-4">
+      <div id="resultEmoji" class="text-5xl">🏆</div>
+      <div class="space-y-1">
+        <h2 id="resultTitle" class="text-2xl font-black text-white">VICTORY!</h2>
+        <p id="resultDesc" class="text-xs text-indigo-300/80">You crushed your opponent!</p>
+      </div>
+      
+      <div class="bg-[#070913] border border-indigo-950 rounded-xl p-3 text-xs space-y-2 text-left">
+        <div class="flex justify-between font-bold">
+          <span class="text-indigo-300/70">Correct Flags Sent:</span>
+          <span id="statFlags" class="text-amber-400 font-mono">0</span>
+        </div>
+        <div class="flex justify-between font-bold">
+          <span class="text-indigo-300/70">Safe Cells Left:</span>
+          <span id="statSafeLeft" class="text-emerald-400 font-mono">0</span>
+        </div>
+      </div>
+
+      <button id="rematchBtn" class="w-full py-3 bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-lg">
+        Play Again / Rematch ⚔️
+      </button>
+    </div>
+  </div>
+
+  <div id="gameFooter" class="hidden fixed bottom-0 left-0 w-full bg-[#0b0f19]/95 border-t border-indigo-950 p-2 backdrop-blur z-30 flex justify-center">
+    <div class="flex bg-[#070913] p-1 rounded-xl border border-indigo-900 shadow-inner w-full max-w-xs">
+      <button id="modeDigBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow">
+        <span>⛏️</span> DIG MODE
+      </button>
+      <button id="modeFlagBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white">
+        <span>🚩</span> FLAG MODE
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      const now = audioCtx.currentTime;
+
+      if (type === 'dig') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+        gain.gain.setValueAtTime(0.15, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+        osc.start(now); osc.stop(now + 0.05);
+      } else if (type === 'flag') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
+        gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now); osc.stop(now + 0.08);
+      } else if (type === 'attack') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.2);
+        gain.gain.setValueAtTime(0.25, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now); osc.stop(now + 0.2);
+      } else if (type === 'rainbow') {
+        const notes = [440, 554.37, 659.25, 880];
+        notes.forEach((freq, idx) => {
+          const nOsc = audioCtx.createOscillator();
+          const nGain = audioCtx.createGain();
+          nOsc.connect(nGain); nGain.connect(audioCtx.destination);
+          nOsc.type = 'triangle';
+          nOsc.frequency.setValueAtTime(freq, now + idx * 0.06);
+          nGain.gain.setValueAtTime(0.2, now + idx * 0.06);
+          nGain.gain.linearRampToValueAtTime(0.01, now + idx * 0.06 + 0.15);
+          nOsc.start(now + idx * 0.06); nOsc.stop(now + idx * 0.06 + 0.15);
+        });
+      } else if (type === 'explode') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+        gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+        osc.start(now); osc.stop(now + 0.35);
+      } else if (type === 'win') {
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const nOsc = audioCtx.createOscillator();
+          const nGain = audioCtx.createGain();
+          nOsc.connect(nGain); nGain.connect(audioCtx.destination);
+          nOsc.type = 'sine';
+          nOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          nGain.gain.setValueAtTime(0.2, now + idx * 0.08);
+          nGain.gain.linearRampToValueAtTime(0.01, now + idx * 0.08 + 0.2);
+          nOsc.start(now + idx * 0.08); nOsc.stop(now + idx * 0.08 + 0.2);
+        });
+      }
+    }
+
+    let peer = null;
+    let conn = null;
+    let isHost = false;
+
+    let matchConfig = { type: 'beginner', rows: 9, cols: 9, mines: 10, seed: 12345, shapeGrid: null };
+    let board = [];
+    let gameStatus = 'waiting';
+    let firstClick = true;
+    let flagsPlaced = 0;
+    let correctFlags = 0;
+    let lastAttackMilestone = 0;
+    let isFlagMode = false;
+    let oppSafeLeft = 0;
+    let rainbowCoord = null;
+    let rainbowTimeout = null;
+
+    let touchTimer = null, touchStartX = 0, touchStartY = 0;
+    let isLongPressTriggered = false;
+    const LONG_PRESS_MS = 280, TOUCH_MOVE_THRESHOLD = 10;
+
+    const presetSelect = document.getElementById('presetSelect');
+    const customInputs = document.getElementById('customInputs');
+    const createLobbyBtn = document.getElementById('createLobbyBtn');
+    const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+    const codeSpan = document.getElementById('codeSpan');
+    const startMatchBtn = document.getElementById('startMatchBtn');
+    const joinCodeInput = document.getElementById('joinCodeInput');
+    const joinLobbyBtn = document.getElementById('joinLobbyBtn');
+    const lobbyContainer = document.getElementById('lobbyContainer');
+    const gameMain = document.getElementById('gameMain');
+    const gameFooter = document.getElementById('gameFooter');
+    const connectionStatus = document.getElementById('connectionStatus');
+    const boardGrid = document.getElementById('boardGrid');
+    const boardViewport = document.getElementById('boardViewport');
+    const mineCountDisplay = document.getElementById('mineCountDisplay');
+    const correctFlagsDisplay = document.getElementById('correctFlagsDisplay');
+    const battleLog = document.getElementById('battleLog');
+    const mySafeLeft = document.getElementById('mySafeLeft');
+    const oppSafeLeftEl = document.getElementById('oppSafeLeft');
+    const resetBtn = document.getElementById('resetBtn');
+    const modeDigBtn = document.getElementById('modeDigBtn');
+    const modeFlagBtn = document.getElementById('modeFlagBtn');
+    const soundBtn = document.getElementById('soundBtn');
+    const resultModal = document.getElementById('resultModal');
+    const resultEmoji = document.getElementById('resultEmoji');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultDesc = document.getElementById('resultDesc');
+    const statFlags = document.getElementById('statFlags');
+    const statSafeLeft = document.getElementById('statSafeLeft');
+    const rematchBtn = document.getElementById('rematchBtn');
+
+    presetSelect.onchange = () => {
+      customInputs.classList.toggle('hidden', presetSelect.value !== 'custom');
+    };
+
+    function generateRandomShapeGrid(rows, cols) {
+      let grid = [];
+      const shapeType = Math.floor(Math.random() * 4);
+      for (let r = 0; r < rows; r++) {
+        let row = [];
+        for (let c = 0; c < cols; c++) {
+          let nx = (c / (cols - 1)) * 2 - 1, ny = (r / (rows - 1)) * 2 - 1;
+          let dist = Math.hypot(nx, ny);
+          let valid = true;
+          if (shapeType === 0 && (dist < 0.3 || dist > 0.95)) valid = false;
+          else if (shapeType === 1 && Math.abs(nx) > 0.45 && Math.abs(ny) > 0.45) valid = false;
+          else if (shapeType === 2 && Math.abs(nx) + Math.abs(ny) > 1.2) valid = false;
+          else if (shapeType === 3 && nx > 0.15 && ny < -0.15) valid = false;
+          row.push(valid);
+        }
+        grid.push(row);
+      }
+      return grid;
+    }
+
+    createLobbyBtn.onclick = () => {
+      isHost = true;
+      const roomCode = 'vsa-' + Math.floor(1000 + Math.random() * 9000);
+      peer = new Peer(roomCode);
+
+      createLobbyBtn.classList.add('hidden');
+      roomCodeDisplay.classList.remove('hidden');
+      codeSpan.innerText = roomCode;
+      connectionStatus.innerText = 'Waiting for opponent to join...';
+
+      peer.on('connection', (c) => {
+        conn = c;
+        setupPeerEvents();
+        connectionStatus.innerText = '🟢 Opponent Connected!';
+        startMatchBtn.classList.remove('hidden');
+      });
+    };
+
+    joinLobbyBtn.onclick = () => {
+      isHost = false;
+      const code = joinCodeInput.value.trim().toLowerCase();
+      if (!code) return alert('Please enter a room code');
+
+      peer = new Peer();
+      peer.on('open', () => {
+        conn = peer.connect(code);
+        setupPeerEvents();
+        connectionStatus.innerText = '🟢 Connected! Waiting for host to start match...';
+      });
+    };
+
+    startMatchBtn.onclick = () => {
+      if (!conn) return;
+      sendMatchStart();
+    };
+
+    rematchBtn.onclick = () => {
+      resultModal.classList.add('hidden');
+      if (isHost && conn) {
+        sendMatchStart();
+      } else {
+        lobbyContainer.classList.remove('hidden');
+        gameMain.classList.add('hidden');
+        gameFooter.classList.add('hidden');
+      }
+    };
+
+    function setupPeerEvents() {
+      conn.on('data', (data) => {
+        if (data.type === 'START_MATCH') {
+          matchConfig = data.config;
+          lobbyContainer.classList.add('hidden');
+          gameMain.classList.remove('hidden');
+          gameFooter.classList.remove('hidden');
+          resultModal.classList.add('hidden');
+          connectionStatus.innerText = '🟢 Live Rainbow Attack Active';
+          initMatch();
+        } else if (data.type === 'STATE_UPDATE') {
+          oppSafeLeft = data.safeLeft;
+          oppSafeLeftEl.innerText = String(oppSafeLeft).padStart(2, '0');
+        } else if (data.type === 'ATTACK_MINES') {
+          receiveAttackMines(data.count);
+        } else if (data.type === 'GAME_OVER') {
+          if (data.reason === 'BOOM') {
+            battleLog.innerText = '💥 Opponent detonated a mine! YOU WIN!';
+            gameOver(true, 'Opponent blew up!', true);
+          } else if (data.reason === 'CLEARED') {
+            battleLog.innerText = '🏁 Opponent cleared their board first! YOU LOST!';
+            gameOver(false, 'Opponent cleared their board first!', false);
+          }
+        }
+      });
+    }
+
+    function sendMatchStart() {
+      const type = presetSelect.value;
+      let r = 9, c = 9, m = 10, shapeGrid = null;
+
+      if (type === 'intermediate') { r = 16; c = 16; m = 40; }
+      else if (type === 'expert') { r = 16; c = 30; m = 99; }
+      else if (type === 'shape') {
+        r = 14; c = 14;
+        shapeGrid = generateRandomShapeGrid(r, c);
+        let active = 0;
+        shapeGrid.forEach(row => row.forEach(val => { if(val) active++; }));
+        m = Math.floor(active * 0.18);
+      } else if (type === 'custom') {
+        r = parseInt(document.getElementById('cRows').value) || 10;
+        c = parseInt(document.getElementById('cCols').value) || 10;
+        m = parseInt(document.getElementById('cMines').value) || 15;
+      }
+
+      matchConfig = { type, rows: r, cols: c, mines: m, seed: Math.floor(Math.random() * 999999), shapeGrid };
+      
+      lobbyContainer.classList.add('hidden');
+      gameMain.classList.remove('hidden');
+      gameFooter.classList.remove('hidden');
+      resultModal.classList.add('hidden');
+      connectionStatus.innerText = '🟢 Live Rainbow Attack Active';
+
+      conn.send({ type: 'START_MATCH', config: matchConfig });
+      initMatch();
+    }
+
+    function initMatch() {
+      gameStatus = 'playing';
+      firstClick = true;
+      flagsPlaced = 0;
+      correctFlags = 0;
+      lastAttackMilestone = 0;
+      rainbowCoord = null;
+      if (rainbowTimeout) clearTimeout(rainbowTimeout);
+
+      resetBtn.innerText = '😎';
+      battleLog.innerText = '🌈 Rainbow square active! Capture it to blast your opponent!';
+
+      board = [];
+      for (let r = 0; r < matchConfig.rows; r++) {
+        let row = [];
+        for (let c = 0; c < matchConfig.cols; c++) {
+          row.push({
+            active: matchConfig.shapeGrid ? matchConfig.shapeGrid[r][c] : true,
+            mine: false,
+            revealed: false,
+            flagged: false,
+            rainbow: false,
+            count: 0
+          });
+        }
+        board.push(row);
+      }
+
+      renderGrid();
+      sendStateUpdate();
+
+      // Schedule first rainbow spawn after 15 seconds
+      rainbowTimeout = setTimeout(spawnRainbowSquare, 15000);
+    }
+
+    function spawnRainbowSquare() {
+      if (gameStatus !== 'playing') return;
+      if (rainbowCoord) return; // Already on board, wait until clicked
+
+      let candidates = [];
+      for (let r = 0; r < matchConfig.rows; r++) {
+        for (let c = 0; c < matchConfig.cols; c++) {
+          if (board[r][c].active && !board[r][c].revealed && !board[r][c].flagged) {
+            candidates.push({ r, c });
+          }
+        }
+      }
+
+      if (candidates.length === 0) return;
+
+      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      rainbowCoord = { r: chosen.r, c: chosen.c };
+      board[chosen.r][chosen.c].rainbow = true;
+      
+      updateCellView(chosen.r, chosen.c);
+      playSound('rainbow');
+      battleLog.innerText = `🌈 A Rainbow Square has appeared! Find and click/flag it!`;
+    }
+
+    function updateCellView(r, c) {
+      const el = document.getElementById(`cell-${r}-${c}`);
+      if (!el) return;
+      const cell = board[r][c];
+
+      if (!cell.active) {
+        el.className = 'ms-void';
+        return;
+      }
+
+      if (cell.revealed) {
+        if (cell.count === 0) {
+          el.className = 'ms-cell ms-revealed-zero rounded-lg flex items-center justify-center';
+          el.innerHTML = '';
+        } else {
+          el.className = 'ms-cell ms-revealed-num rounded-lg flex items-center justify-center';
+          el.innerHTML = `<span class="num-${cell.count}">${cell.count}</span>`;
+        }
+      } else if (cell.flagged) {
+        el.className = 'ms-cell ms-unrevealed rounded-lg flex items-center justify-center';
+        el.innerText = '🚩';
+      } else if (cell.rainbow) {
+        el.className = 'ms-cell ms-rainbow rounded-lg flex items-center justify-center text-lg';
+        el.innerText = '🌈';
+      } else {
+        el.className = 'ms-cell ms-unrevealed rounded-lg flex items-center justify-center';
+        el.innerText = '';
+      }
+    }
+
+    function renderGrid() {
+      boardGrid.style.gridTemplateColumns = `repeat(${matchConfig.cols}, minmax(40px, 1fr))`;
+      boardGrid.innerHTML = '';
+
+      for (let r = 0; r < matchConfig.rows; r++) {
+        for (let c = 0; c < matchConfig.cols; c++) {
+          const cellEl = document.createElement('button');
+          cellEl.id = `cell-${r}-${c}`;
+          boardGrid.appendChild(cellEl);
+          updateCellView(r, c);
+
+          const cellData = board[r][c];
+          if (cellData.active) {
+            cellEl.addEventListener('touchstart', (e) => handleTouchStart(e, r, c), { passive: false });
+            cellEl.addEventListener('touchmove', (e) => handleTouchMove(e), { passive: true });
+            cellEl.addEventListener('touchend', (e) => handleTouchEnd(e, r, c));
+            cellEl.addEventListener('click', () => handleCellClick(r, c));
+            cellEl.addEventListener('contextmenu', (e) => {
+              e.preventDefault();
+              toggleFlag(r, c);
+            });
+          }
+        }
+      }
+    }
+
+    function generateMines(safeR, safeC) {
+      let placed = 0;
+      while (placed < matchConfig.mines) {
+        let r = Math.floor(Math.random() * matchConfig.rows);
+        let c = Math.floor(Math.random() * matchConfig.cols);
+
+        if (!board[r][c].active) continue;
+        if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
+
+        if (!board[r][c].mine) {
+          board[r][c].mine = true;
+          placed++;
+        }
+      }
+      recalculateCounts();
+    }
+
+    function recalculateCounts() {
+      for (let r = 0; r < matchConfig.rows; r++) {
+        for (let c = 0; c < matchConfig.cols; c++) {
+          if (!board[r][c].active || board[r][c].mine) continue;
+          let cnt = 0;
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+              let nr = r + dr, nc = c + dc;
+              if (nr >= 0 && nr < matchConfig.rows && nc >= 0 && nc < matchConfig.cols) {
+                if (board[nr][nc].active && board[nr][nc].mine) cnt++;
+              }
+            }
+          }
+          board[r][c].count = cnt;
+          if (board[r][c].revealed) updateCellView(r, c);
+        }
+      }
+    }
+
+    function checkRainbowCaptured(r, c) {
+      if (rainbowCoord && rainbowCoord.r === r && rainbowCoord.c === c) {
+        rainbowCoord = null;
+        board[r][c].rainbow = false;
+        playSound('attack');
+        battleLog.innerText = `🌟 RAINBOW CAPTURED! -3 mines for you, +3 for opponent!`;
+        
+        // Remove 3 mines from self (if possible)
+        let removed = 0;
+        for (let ro = 0; ro < matchConfig.rows; ro++) {
+          for (let co = 0; co < matchConfig.cols; co++) {
+            if (board[ro][co].mine && removed < 3 && !board[ro][co].revealed) {
+              board[ro][co].mine = false;
+              removed++;
+            }
+          }
+        }
+        matchConfig.mines = Math.max(0, matchConfig.mines - removed);
+        recalculateCounts();
+        updateCounters();
+
+        // Send attack to opponent (+3 mines)
+        if (conn) conn.send({ type: 'ATTACK_MINES', count: 3 });
+
+        // Schedule next rainbow spawn in 15 seconds
+        if (rainbowTimeout) clearTimeout(rainbowTimeout);
+        rainbowTimeout = setTimeout(spawnRainbowSquare, 15000);
+      }
+    }
+
+    function handleCellClick(r, c) {
+      if (gameStatus !== 'playing') return;
+      if (isFlagMode) return toggleFlag(r, c);
+      digCell(r, c);
+    }
+
+    function digCell(r, c) {
+      const cell = board[r][c];
+      if (!cell.active || cell.flagged || cell.revealed) return;
+
+      if (firstClick) {
+        firstClick = false;
+        generateMines(r, c);
+      }
+
+      checkRainbowCaptured(r, c);
+
+      if (cell.mine) {
+        gameOver(false, '💥 You hit a mine!', false);
+        if (conn) conn.send({ type: 'GAME_OVER', reason: 'BOOM' });
+        return;
+      }
+
+      playSound('dig');
+      revealCell(r, c);
+      checkWinCondition();
+    }
+
+    function revealCell(r, c) {
+      if (r < 0 || r >= matchConfig.rows || c < 0 || c >= matchConfig.cols) return;
+      const cell = board[r][c];
+      if (!cell.active || cell.revealed || cell.flagged) return;
+
+      cell.revealed = true;
+      updateCellView(r, c);
+
+      if (cell.count === 0) {
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            if (dr !== 0 || dc !== 0) revealCell(r + dr, c + dc);
+          }
+        }
+      }
+    }
+
+    function toggleFlag(r, c) {
+      if (gameStatus !== 'playing') return;
+      const cell = board[r][c];
+      if (!cell.active || cell.revealed) return;
+
+      cell.flagged = !cell.flagged;
+      flagsPlaced += cell.flagged ? 1 : -1;
+      playSound('flag');
+
+      if (cell.flagged) checkRainbowCaptured(r, c);
+
+      updateCellView(r, c);
+      recountCorrectFlags();
+      updateCounters();
+      sendStateUpdate();
+    }
+
+    function recountCorrectFlags() {
+      let count = 0;
+      for (let r = 0; r < matchConfig.rows; r++) {
+        for (let c = 0; c < matchConfig.cols; c++) {
+          if (board[r][c].active && board[r][c].mine && board[r][c].flagged) count++;
+        }
+      }
+      correctFlags = count;
+      correctFlagsDisplay.innerText = `${correctFlags}/10`;
+
+      const milestone = Math.floor(correctFlags / 10);
+      if (milestone > lastAttackMilestone) {
+        lastAttackMilestone = milestone;
+        playSound('attack');
+        battleLog.innerText = `🚀 10 BOMBS FLAGGED! Sent extra mine attack to opponent!`;
+        if (conn) conn.send({ type: 'ATTACK_MINES', count: 1 });
+      }
+    }
+
+    function receiveAttackMines(count) {
+      let candidates = [];
+      for (let r = 0; r < matchConfig.rows; r++) {
+        for (let c = 0; c < matchConfig.cols; c++) {
+          if (board[r][c].active && !board[r][c].mine) {
+            candidates.push({ r, c });
+          }
+        }
+      }
+
+      let added = 0;
+      for (let i = 0; i < count && candidates.length > 0; i++) {
+        let idx = Math.floor(Math.random() * candidates.length);
+        let target = candidates.splice(idx, 1)[0];
+        board[target.r][target.c].mine = true;
+        matchConfig.mines++;
+        added++;
+
+        const el = document.getElementById(`cell-${target.r}-${target.c}`);
+        if (el) {
+          el.classList.add('animate-attack');
+          setTimeout(() => el.classList.remove('animate-attack'), 1200);
+        }
+      }
+
+      recalculateCounts();
+      playSound('explode');
+      battleLog.innerText = `⚠️ INCOMING ATTACK! Opponent blasted you with ${added} extra mine(s)!`;
+      updateCounters();
+    }
+
+    function sendStateUpdate() {
+      let safeLeft = 0;
+      for (let r = 0; r < matchConfig.rows; r++) {
+        for (let c = 0; c < matchConfig.cols; c++) {
+          if (board[r][c].active && !board[r][c].mine && !board[r][c].revealed) safeLeft++;
+        }
+      }
+      mySafeLeft.innerText = String(safeLeft).padStart(2, '0');
+      if (conn) conn.send({ type: 'STATE_UPDATE', safeLeft });
+    }
+
+    function checkWinCondition() {
+      sendStateUpdate();
+      let safeLeft = 0;
+      for (let r = 0; r < matchConfig.rows; r++) {
+        for (let c = 0; c < matchConfig.cols; c++) {
+          if (board[r][c].active && !board[r][c].mine && !board[r][c].revealed) safeLeft++;
+        }
+      }
+
+      if (safeLeft === 0) {
+        if (rainbowTimeout) clearTimeout(rainbowTimeout);
+        gameOver(true, '🎉 You cleared all safe cells first!', true);
+        if (conn) conn.send({ type: 'GAME_OVER', reason: 'CLEARED' });
+      }
+    }
+
+    function gameOver(isWin, msg, isVictory) {
+      if (rainbowTimeout) clearTimeout(rainbowTimeout);
+      gameStatus = isWin ? 'won' : 'lost';
+      resetBtn.innerText = isWin ? '😎🏆' : '😵';
+      playSound(isWin ? 'win' : 'explode');
+
+      let safeLeft = 0;
+      for (let r = 0; r < matchConfig.rows; r++) {
+        for (let c = 0; c < matchConfig.cols; c++) {
+          if (board[r][c].active && !board[r][c].mine && !board[r][c].revealed) safeLeft++;
+        }
+      }
+
+      statFlags.innerText = correctFlags;
+      statSafeLeft.innerText = safeLeft;
+
+      showResultModal(isVictory, isVictory ? 'VICTORY!' : 'DEFEAT', msg);
+
+      for (let r = 0; r < matchConfig.rows; r++) {
+        for (let c = 0; c < matchConfig.cols; c++) {
+          const cell = board[r][c];
+          const el = document.getElementById(`cell-${r}-${c}`);
+          if (cell.active && cell.mine && el) {
+            el.className = 'ms-cell rounded-lg flex items-center justify-center bg-rose-950/90 border border-rose-600';
+            el.innerText = '💣';
+          }
+        }
+      }
+    }
+
+    function showResultModal(isWin, title, desc) {
+      resultEmoji.innerText = isWin ? '🏆' : '💀';
+      resultTitle.innerText = title;
+      resultTitle.className = `text-2xl font-black ${isWin ? 'text-emerald-400' : 'text-rose-500'}`;
+      resultDesc.innerText = desc;
+      resultModal.classList.remove('hidden');
+    }
+
+    function updateCounters() {
+      mineCountDisplay.innerText = String(matchConfig.mines - flagsPlaced).padStart(3, '0');
+    }
+
+    function handleTouchStart(e, r, c) {
+      initAudio();
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      isLongPressTriggered = false;
+
+      const el = document.getElementById(`cell-${r}-${c}`);
+      if (el && !board[r][c].revealed) el.classList.add('ms-pressing');
+
+      touchTimer = setTimeout(() => {
+        isLongPressTriggered = true;
+        if (el) el.classList.remove('ms-pressing');
+        toggleFlag(r, c);
+      }, LONG_PRESS_MS);
+    }
+
+    function handleTouchMove(e) {
+      if (!touchTimer) return;
+      if (Math.hypot(e.touches[0].clientX - touchStartX, e.touches[0].clientY - touchStartY) > TOUCH_MOVE_THRESHOLD) {
+        clearTimeout(touchTimer); touchTimer = null;
+        document.querySelectorAll('.ms-pressing').forEach(el => el.classList.remove('ms-pressing'));
+      }
+    }
+
+    function handleTouchEnd(e, r, c) {
+      if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
+      document.querySelectorAll('.ms-pressing').forEach(el => el.classList.remove('ms-pressing'));
+      if (isLongPressTriggered) e.preventDefault();
+    }
+
+    modeDigBtn.onclick = () => {
+      isFlagMode = false;
+      modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow";
+      modeFlagBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white";
+    };
+
+    modeFlagBtn.onclick = () => {
+      isFlagMode = true;
+      modeFlagBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow";
+      modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white";
+    };
+
+    resetBtn.onclick = () => {
+      if (isHost && conn) sendMatchStart();
+    };
+
+    soundBtn.onclick = () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundOnIcon').classList.toggle('hidden', !soundEnabled);
+      document.getElementById('soundOffIcon').classList.toggle('hidden', soundEnabled);
+    };
+  </script>
+</body>
+</html>
