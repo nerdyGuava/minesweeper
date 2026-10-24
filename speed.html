@@ -6,33 +6,26 @@
   <title>Minesweeper - Speed Run Mode</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    * { 
-      touch-action: manipulation; 
-      -webkit-touch-callout: none; 
-    }
+    * { touch-action: manipulation; -webkit-touch-callout: none; }
     
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #070913; }
     ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #312e81; }
 
-    #boardViewport {
-      touch-action: pan-x pan-y pinch-zoom;
-      -webkit-overflow-scrolling: touch;
-      overflow: auto;
-    }
-
+    /* Dynamic Cell Sizing: Scales dynamically up to fill viewport */
     .ms-cell {
-      width: 40px;
-      height: 40px;
-      min-width: 40px;
-      min-height: 40px;
-      aspect-ratio: 1 / 1;
+      width: var(--cell-size, 46px);
+      height: var(--cell-size, 46px);
+      min-width: var(--cell-size, 46px);
+      min-height: var(--cell-size, 46px);
       font-weight: 800;
-      font-size: 1.15rem;
+      font-size: calc(var(--cell-size, 46px) * 0.52);
       user-select: none;
-      transition: background-color 0.1s, transform 0.05s;
+      transition: background-color 0.1s, transform 0.05s, border-color 0.1s;
     }
 
+    /* Cyber Unrevealed Cell */
     .ms-unrevealed {
       background: linear-gradient(135deg, #1e1b4b, #0f172a);
       border-top: 2px solid #6366f1;
@@ -42,7 +35,10 @@
       box-shadow: 0 0 6px rgba(99, 102, 241, 0.25);
     }
     
-    .ms-unrevealed:active { transform: scale(0.93); background: #0f172a; }
+    .ms-unrevealed:active {
+      transform: scale(0.93);
+      background: #0f172a;
+    }
 
     .ms-pressing {
       background: #831843 !important;
@@ -51,26 +47,18 @@
       transform: scale(0.92);
     }
 
+    /* Revealed Empty (0) Cell */
     .ms-revealed-zero {
       background: #0b0f19;
       border: 1px solid #111827;
       box-shadow: inset 3px 3px 6px rgba(0,0,0,0.9);
     }
 
+    /* Revealed Number Cell */
     .ms-revealed-num {
       background: #0d1322;
       border: 1px solid #1e1b4b;
       box-shadow: inset 2px 2px 4px rgba(0,0,0,0.7);
-    }
-
-    .ms-void {
-      width: 40px;
-      height: 40px;
-      min-width: 40px;
-      min-height: 40px;
-      aspect-ratio: 1 / 1;
-      visibility: hidden;
-      pointer-events: none;
     }
 
     .num-1 { color: #38bdf8; text-shadow: 0 0 8px rgba(56, 189, 248, 0.4); }
@@ -81,193 +69,205 @@
     .num-6 { color: #2dd4bf; }
     .num-7 { color: #f472b6; }
     .num-8 { color: #94a3b8; }
+
+    @keyframes pulse-danger {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.04); }
+    }
+    .animate-pulse-danger {
+      animation: pulse-danger 0.6s infinite;
+    }
   </style>
 </head>
-<body class="min-h-full flex flex-col justify-between overflow-y-auto pb-24">
+<body class="min-h-full flex flex-col justify-between overflow-y-auto pb-16">
 
-  <!-- Header -->
-  <header class="bg-[#0b0f19] border-b border-indigo-950 px-4 py-3 flex items-center justify-between shadow-lg relative z-10">
+  <!-- Top Header Bar -->
+  <header class="bg-[#0b0f19] border-b border-indigo-950/80 px-4 py-2 flex items-center justify-between shadow-lg sticky top-0 z-30">
     <div class="flex items-center gap-3">
-      <a href="hub.html" class="px-3 py-1.5 rounded-xl bg-indigo-950/60 border border-indigo-800/50 hover:bg-indigo-900/80 text-indigo-300 hover:text-white transition text-xs font-bold flex items-center gap-1.5 shadow">
-        <span>🎮</span> <span>All Modes</span>
+      <!-- All Modes Hub Button -->
+      <a href="hub.html" class="px-3 py-1.5 rounded-lg bg-indigo-950/60 border border-indigo-800/50 hover:bg-indigo-900/80 text-indigo-300 hover:text-white transition flex items-center gap-2 text-xs font-bold shadow" title="All Game Modes">
+        <span>🎮</span>
+        <span class="hidden sm:inline">All Modes</span>
       </a>
       <div>
-        <h1 class="text-lg sm:text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-fuchsia-400 to-indigo-400 drop-shadow flex items-center gap-2">
-          <span>⚡</span> SPEED RUN
+        <h1 class="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-pink-400 to-amber-400 drop-shadow">
+          ⚡ SPEED RUN
         </h1>
-        <p id="subHeaderStatus" class="text-[10px] text-amber-400 font-bold">Beginner • Bronze (45s)</p>
+        <p id="activeTierBadge" class="text-[10px] text-amber-400 font-bold">Beginner • 🥉 Bronze (45s)</p>
       </div>
     </div>
 
+    <!-- Right Controls -->
     <div class="flex items-center gap-2">
-      <button id="setupBtn" class="px-3 py-1.5 rounded-xl bg-indigo-950/60 border border-indigo-800/50 hover:bg-indigo-900 text-indigo-300 text-xs font-bold flex items-center gap-1.5 shadow">
-        <span>⚙️</span> Setup
+      <!-- Toggle Level Setup Drawer Button -->
+      <button id="toggleSetupBtn" class="px-3 py-1.5 rounded-lg bg-indigo-900/60 border border-indigo-700/80 text-xs font-bold text-indigo-200 hover:text-white transition flex items-center gap-1">
+        <span>⚙️ Setup</span>
       </button>
-      <button id="soundBtn" class="p-2 rounded-xl bg-indigo-950/60 border border-indigo-800/50 text-amber-400 hover:bg-indigo-900 shadow">
-        <svg id="soundOnIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"/></svg>
-        <svg id="soundOffIcon" class="w-4 h-4 hidden text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
+
+      <button id="soundBtn" class="p-2 rounded-lg bg-indigo-950/60 border border-indigo-800/50 text-amber-400 transition hover:bg-indigo-900" title="Toggle Sound">
+        <svg id="soundOnIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"/></svg>
+        <svg id="soundOffIcon" class="w-5 h-5 hidden text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
       </button>
-      <button id="statsBtn" class="p-2 rounded-xl bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 hover:bg-indigo-900 shadow">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+
+      <button id="statsBtn" class="p-2 rounded-lg bg-indigo-950/60 border border-indigo-800/50 text-indigo-200 hover:text-white transition hover:bg-indigo-900" title="Speed Records">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       </button>
     </div>
   </header>
 
-  <!-- MAIN DASHBOARD CONTENT -->
-  <main class="w-full max-w-4xl mx-auto p-4 flex flex-col items-center space-y-4">
-
-    <!-- Tier Navigation Tabs -->
-    <div class="grid grid-cols-4 gap-1 bg-[#0b0f19] p-1.5 rounded-2xl border border-indigo-950 w-full max-w-xl shadow-lg">
-      <button onclick="switchTier('beginner')" id="tabBeginner" class="py-2 rounded-xl text-xs font-black tracking-wider transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow">Beginner</button>
-      <button onclick="switchTier('intermediate')" id="tabIntermediate" class="py-2 rounded-xl text-xs font-bold text-indigo-300 hover:text-white transition">Intermediate</button>
-      <button onclick="switchTier('expert')" id="tabExpert" class="py-2 rounded-xl text-xs font-bold text-indigo-300 hover:text-white transition">Expert</button>
-      <button onclick="switchTier('custom')" id="tabCustom" class="py-2 rounded-xl text-xs font-bold text-indigo-300 hover:text-white transition">Custom</button>
+  <!-- Level & Tier Selection Setup Drawer (Collapsible) -->
+  <div id="setupDrawer" class="max-w-4xl mx-auto w-full px-3 py-2 space-y-2 border-b border-indigo-950 bg-[#070913]/90">
+    <div class="flex bg-[#0b0f19] p-1 rounded-xl border border-indigo-950 gap-1 text-xs font-bold">
+      <button class="diff-tab flex-1 py-1.5 rounded-lg transition text-indigo-300 hover:text-white" data-diff="beginner">Beginner</button>
+      <button class="diff-tab flex-1 py-1.5 rounded-lg transition text-indigo-300 hover:text-white" data-diff="intermediate">Intermediate</button>
+      <button class="diff-tab flex-1 py-1.5 rounded-lg transition text-indigo-300 hover:text-white" data-diff="expert">Expert</button>
+      <button class="diff-tab flex-1 py-1.5 rounded-lg transition text-indigo-300 hover:text-white" data-diff="custom">Custom</button>
     </div>
 
-    <!-- Medal Cards Row -->
-    <div id="medalsContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl">
-      <div class="bg-[#0b0f19] border-2 border-fuchsia-500 rounded-2xl p-3.5 shadow-xl flex items-center justify-between">
-        <div class="space-y-0.5">
-          <div class="text-[10px] text-amber-400 font-bold flex items-center gap-1"><span>🥉</span> BRONZE</div>
-          <div id="cardBronzeStatus" class="text-[11px] text-slate-400">Not beaten</div>
-        </div>
-        <div id="cardBronzeTime" class="text-sm font-black font-mono text-white">45s</div>
-      </div>
+    <div id="tierSelectorContainer" class="grid grid-cols-3 gap-2"></div>
 
-      <div class="bg-[#0b0f19]/60 border border-indigo-950 rounded-2xl p-3.5 shadow-xl flex items-center justify-between opacity-75">
-        <div class="space-y-0.5">
-          <div class="text-[10px] text-slate-400 font-bold flex items-center gap-1"><span>🥈</span> SILVER</div>
-          <div class="text-[11px] text-slate-500">Locked</div>
+    <div id="customControls" class="hidden bg-[#0b0f19] border border-indigo-900/60 p-2.5 rounded-xl text-xs space-y-2">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div>
+          <label class="block text-indigo-300/80 mb-0.5">Rows (5-30)</label>
+          <input type="number" id="custRows" value="10" min="5" max="30" class="w-full bg-[#070913] border border-indigo-900 rounded p-1 text-white font-bold">
         </div>
-        <div class="text-sm font-black font-mono text-slate-500">30s</div>
-      </div>
-
-      <div class="bg-[#0b0f19]/60 border border-indigo-950 rounded-2xl p-3.5 shadow-xl flex items-center justify-between opacity-75">
-        <div class="space-y-0.5">
-          <div class="text-[10px] text-amber-300 font-bold flex items-center gap-1"><span>🥇</span> GOLD</div>
-          <div class="text-[11px] text-slate-500">Locked</div>
+        <div>
+          <label class="block text-indigo-300/80 mb-0.5">Cols (5-30)</label>
+          <input type="number" id="custCols" value="10" min="5" max="30" class="w-full bg-[#070913] border border-indigo-900 rounded p-1 text-white font-bold">
         </div>
-        <div class="text-sm font-black font-mono text-slate-500">18s</div>
+        <div>
+          <label class="block text-indigo-300/80 mb-0.5">Mines</label>
+          <input type="number" id="custMines" value="12" min="1" class="w-full bg-[#070913] border border-indigo-900 rounded p-1 text-white font-bold">
+        </div>
+        <div>
+          <label class="block text-indigo-300/80 mb-0.5">Time Limit (s)</label>
+          <input type="number" id="custTime" value="45" min="5" max="999" class="w-full bg-[#070913] border border-indigo-900 rounded p-1 text-amber-400 font-bold">
+        </div>
       </div>
+      <button id="startCustomBtn" class="w-full py-1.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white font-black tracking-wider rounded-lg uppercase shadow">
+        Start Custom Challenge
+      </button>
     </div>
+  </div>
 
-    <!-- Custom Config Inputs (Hidden by default) -->
-    <div id="customConfigPanel" class="hidden w-full max-w-xl bg-[#0b0f19] border border-indigo-900 rounded-2xl p-4 shadow-xl grid grid-cols-3 gap-3 text-xs">
-      <div>
-        <label class="block text-[10px] text-indigo-300 font-bold mb-1">ROWS</label>
-        <input type="number" id="cRows" value="12" class="w-full bg-[#070913] border border-indigo-900 p-2 rounded-xl text-white font-bold text-center">
-      </div>
-      <div>
-        <label class="block text-[10px] text-indigo-300 font-bold mb-1">COLS</label>
-        <input type="number" id="cCols" value="12" class="w-full bg-[#070913] border border-indigo-900 p-2 rounded-xl text-white font-bold text-center">
-      </div>
-      <div>
-        <label class="block text-[10px] text-indigo-300 font-bold mb-1">MINES</label>
-        <input type="number" id="cMines" value="20" class="w-full bg-[#070913] border border-indigo-900 p-2 rounded-xl text-white font-bold text-center">
-      </div>
-    </div>
-
-    <!-- HUD Control Bar (Bombs, Face Emoji, Timer & Progress Bar) -->
-    <div class="w-full max-w-xl bg-[#0b0f19] border border-indigo-900/80 rounded-2xl p-3 shadow-xl space-y-2.5">
-      <div class="flex items-center justify-between px-2">
-        <div class="flex items-center gap-2 bg-[#070913] px-3 py-1.5 rounded-xl border border-indigo-950">
-          <span class="text-rose-400">💣</span>
-          <span id="mineCountDisplay" class="font-mono font-black text-indigo-100 text-sm">010</span>
+  <!-- Game Play Area -->
+  <main class="flex-1 flex flex-col items-center justify-start p-2 w-full">
+    
+    <!-- Counters & Time Progress Bar -->
+    <div class="w-full max-w-lg bg-[#0b0f19] border border-indigo-900/50 rounded-xl p-2.5 mb-2 shadow-lg space-y-2 sticky top-[52px] z-20">
+      <div class="flex items-center justify-between text-sm font-black">
+        <div class="flex items-center gap-2 bg-[#070913] px-3 py-1 rounded-lg border border-indigo-950">
+          <span class="text-rose-400 text-base">💣</span>
+          <span id="mineCountDisplay" class="font-mono text-lg text-indigo-100">000</span>
         </div>
 
-        <button id="resetBtn" class="px-5 py-1.5 bg-indigo-950 hover:bg-indigo-900 border border-indigo-800 rounded-xl text-2xl active:scale-95 shadow">
+        <button id="resetBtn" class="px-4 py-1 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 rounded-lg text-xl transition active:scale-95 shadow-md">
           😎
         </button>
 
-        <div class="flex items-center gap-2 bg-[#070913] px-3 py-1.5 rounded-xl border border-indigo-950">
-          <span class="text-amber-400">⏱️</span>
-          <span id="timerDisplay" class="font-mono font-black text-amber-400 text-sm">00.0</span>
+        <div id="timerContainer" class="flex items-center gap-2 bg-[#070913] px-3 py-1 rounded-lg border border-indigo-950">
+          <span class="text-amber-400 text-base">⏱️</span>
+          <span id="timerDisplay" class="font-mono text-lg text-amber-400 font-bold">00.0</span>
         </div>
       </div>
 
-      <!-- Target Countdown Progress Bar -->
-      <div class="w-full bg-[#070913] h-2.5 rounded-full overflow-hidden p-0.5 border border-indigo-950">
-        <div id="timeProgressBar" class="bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500 h-full rounded-full transition-all duration-300" style="width: 100%;"></div>
+      <div class="w-full h-2.5 bg-[#070913] rounded-full overflow-hidden border border-indigo-950">
+        <div id="timeProgressBar" class="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 w-full transition-all duration-100 ease-linear"></div>
       </div>
     </div>
 
-    <!-- Scrollable Board Viewport (Fixed Cell Sizes & No Squishing) -->
-    <div id="boardViewport" class="w-full flex justify-start sm:justify-center items-start overflow-auto p-4 border border-indigo-950/80 rounded-2xl bg-[#03050c]/80 backdrop-blur-md shadow-inner max-h-[60vh]">
-      <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-2xl border border-indigo-900/50 shadow-2xl shrink-0"></div>
+    <!-- Maximized Board Viewport Container -->
+    <div id="boardViewport" class="w-full flex-1 min-h-[60vh] flex justify-center items-center overflow-auto p-2 border border-indigo-950/80 rounded-xl bg-[#03050c]/80 backdrop-blur-md shadow-inner">
+      <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl transition-all">
+        <!-- Dynamic cells -->
+      </div>
     </div>
 
   </main>
 
-  <!-- MATCH RESULT OVERLAY MODAL -->
-  <div id="resultModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-[#0b0f19] border border-indigo-900/80 rounded-2xl w-full max-w-sm p-6 shadow-2xl text-center space-y-4">
-      <div id="resultEmoji" class="text-5xl">🏆</div>
-      <div class="space-y-1">
-        <h2 id="resultTitle" class="text-2xl font-black text-white">VICTORY!</h2>
-        <p id="resultDesc" class="text-xs text-indigo-300/80">You cleared the board!</p>
-      </div>
-      
-      <div class="bg-[#070913] border border-indigo-950 rounded-xl p-3 text-xs space-y-2 text-left">
-        <div class="flex justify-between font-bold">
-          <span class="text-indigo-300/70">Final Time:</span>
-          <span id="statTime" class="text-amber-400 font-mono">0.0s</span>
-        </div>
-        <div class="flex justify-between font-bold">
-          <span class="text-indigo-300/70">Personal Best:</span>
-          <span id="statBest" class="text-emerald-400 font-mono">--</span>
-        </div>
-      </div>
-
-      <div class="flex gap-2">
-        <button id="retryBtn" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow">
-          Play Again ⏱️
-        </button>
-        <button id="menuBtn" class="flex-1 py-3 bg-indigo-950 hover:bg-indigo-900 border border-indigo-800 text-indigo-300 font-black rounded-xl text-xs uppercase tracking-wider shadow">
-          Change Tier 🏠
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- STATS OVERLAY MODAL -->
-  <div id="statsModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-[#0b0f19] border border-indigo-900/80 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b border-indigo-950 pb-3">
-        <h2 class="text-lg font-black text-white flex items-center gap-2"><span>📊</span> Speed Run Statistics</h2>
-        <button onclick="document.getElementById('statsModal').classList.add('hidden')" class="text-slate-400 hover:text-white font-bold text-sm">✕</button>
-      </div>
-      <div id="statsContent" class="space-y-3 text-xs">
-        <div class="flex justify-between p-3 bg-[#070913] rounded-xl border border-indigo-950 font-bold">
-          <span class="text-indigo-300">Beginner Best:</span>
-          <span id="statBeginnerBest" class="text-amber-400 font-mono">--</span>
-        </div>
-        <div class="flex justify-between p-3 bg-[#070913] rounded-xl border border-indigo-950 font-bold">
-          <span class="text-indigo-300">Intermediate Best:</span>
-          <span id="statIntermediateBest" class="text-amber-400 font-mono">--</span>
-        </div>
-        <div class="flex justify-between p-3 bg-[#070913] rounded-xl border border-indigo-950 font-bold">
-          <span class="text-indigo-300">Expert Best:</span>
-          <span id="statExpertBest" class="text-amber-400 font-mono">--</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bottom Mode Switcher Footer -->
-  <div class="fixed bottom-0 left-0 w-full bg-[#0b0f19]/95 border-t border-indigo-950 p-3 backdrop-blur z-30 flex justify-center">
-    <div class="flex bg-[#070913] p-1.5 rounded-2xl border border-indigo-900 shadow-inner w-full max-w-xs">
-      <button id="modeDigBtn" class="flex-1 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow">
+  <!-- Mobile Floating Dig / Flag Mode Switcher Bar -->
+  <div class="fixed bottom-0 left-0 w-full bg-[#0b0f19]/95 border-t border-indigo-950 p-2 backdrop-blur z-30 flex justify-center">
+    <div class="flex bg-[#070913] p-1 rounded-xl border border-indigo-900 shadow-inner w-full max-w-xs">
+      <button id="modeDigBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow">
         <span>⛏️</span> DIG MODE
       </button>
-      <button id="modeFlagBtn" class="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white">
+      <button id="modeFlagBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white">
         <span>🚩</span> FLAG MODE
       </button>
     </div>
   </div>
 
+  <!-- Stats Modal -->
+  <div id="statsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#0b0f19] border border-indigo-900/80 rounded-2xl w-full max-w-md p-5 shadow-2xl relative space-y-4">
+      <button id="closeStatsBtn" class="absolute top-4 right-4 text-indigo-400 hover:text-white p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <h2 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-amber-400 flex items-center gap-2">
+        <span>🏆</span> Speed Run Medals & Records
+      </h2>
+      <div id="modalRecordsList" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
   <script>
+    const PRESETS = {
+      beginner: {
+        name: 'Beginner', rows: 9, cols: 9, mines: 10,
+        tiers: {
+          bronze: { id: 'b_bronze', name: 'Bronze', time: 45, icon: '🥉', color: 'border-amber-700/60 bg-amber-950/20' },
+          silver: { id: 'b_silver', name: 'Silver', time: 30, icon: '🥈', color: 'border-slate-500/60 bg-slate-900/30' },
+          gold:   { id: 'b_gold',   name: 'Gold',   time: 18, icon: '🥇', color: 'border-yellow-500/60 bg-yellow-950/20' }
+        }
+      },
+      intermediate: {
+        name: 'Intermediate', rows: 16, cols: 16, mines: 40,
+        tiers: {
+          bronze: { id: 'i_bronze', name: 'Bronze', time: 120, icon: '🥉', color: 'border-amber-700/60 bg-amber-950/20' },
+          silver: { id: 'i_silver', name: 'Silver', time: 80,  icon: '🥈', color: 'border-slate-500/60 bg-slate-900/30' },
+          gold:   { id: 'e_gold',   name: 'Gold',   time: 50,  icon: '🥇', color: 'border-yellow-500/60 bg-yellow-950/20' }
+        }
+      },
+      expert: {
+        name: 'Expert', rows: 16, cols: 30, mines: 99,
+        tiers: {
+          bronze: { id: 'e_bronze', name: 'Bronze', time: 240, icon: '🥉', color: 'border-amber-700/60 bg-amber-950/20' },
+          silver: { id: 'e_silver', name: 'Silver', time: 160, icon: '🥈', color: 'border-slate-500/60 bg-slate-900/30' },
+          gold:   { id: 'e_gold',   name: 'Gold',   time: 100, icon: '🥇', color: 'border-yellow-500/60 bg-yellow-950/20' }
+        }
+      }
+    };
+
+    let currentDifficulty = 'beginner';
+    let currentTierKey = 'bronze';
+    let rows = 9, cols = 9, mineCount = 10;
+    let targetTime = 45, remainingTime = 45;
+
+    let board = [];
+    let gameStatus = 'ready';
+    let firstClick = true;
+    let flagsPlaced = 0;
+    let isFlagMode = false;
+
+    let timerInterval = null;
     let soundEnabled = true;
     let audioCtx = null;
+
+    let touchTimer = null;
+    let touchStartX = 0, touchStartY = 0;
+    let isLongPressTriggered = false;
+    const LONG_PRESS_MS = 280;
+    const TOUCH_MOVE_THRESHOLD = 10;
+
+    let speedData = JSON.parse(localStorage.getItem('ms_speed_data')) || {
+      unlocked: { beginner: ['bronze'], intermediate: ['bronze'], expert: ['bronze'] },
+      records: {}
+    };
+
+    function saveSpeedData() {
+      localStorage.setItem('ms_speed_data', JSON.stringify(speedData));
+    }
 
     function initAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -280,27 +280,31 @@
 
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
       const now = audioCtx.currentTime;
 
       if (type === 'dig') {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(400, now);
         osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
-        gain.gain.setValueAtTime(0.15, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
         osc.start(now); osc.stop(now + 0.05);
       } else if (type === 'flag') {
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(600, now);
         osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
-        gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
         osc.start(now); osc.stop(now + 0.08);
       } else if (type === 'explode') {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(150, now);
-        osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
-        gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
-        osc.start(now); osc.stop(now + 0.35);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.3);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now); osc.stop(now + 0.3);
       } else if (type === 'win') {
         const notes = [523.25, 659.25, 783.99, 1046.50];
         notes.forEach((freq, idx) => {
@@ -313,25 +317,17 @@
           nGain.gain.linearRampToValueAtTime(0.01, now + idx * 0.08 + 0.2);
           nOsc.start(now + idx * 0.08); nOsc.stop(now + idx * 0.08 + 0.2);
         });
+      } else if (type === 'tick') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, now);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.02);
+        osc.start(now); osc.stop(now + 0.02);
       }
     }
 
-    let currentTier = 'beginner';
-    let matchConfig = { type: 'beginner', rows: 9, cols: 9, mines: 10, targetSeconds: 45 };
-    let board = [];
-    let gameStatus = 'waiting';
-    let firstClick = true;
-    let flagsPlaced = 0;
-    let isFlagMode = false;
-    let timerInterval = null;
-    let secondsElapsed = 0;
-
-    let touchTimer = null, touchStartX = 0, touchStartY = 0;
-    let isLongPressTriggered = false;
-    const LONG_PRESS_MS = 280, TOUCH_MOVE_THRESHOLD = 10;
-
-    const subHeaderStatus = document.getElementById('subHeaderStatus');
     const boardGrid = document.getElementById('boardGrid');
+    const boardViewport = document.getElementById('boardViewport');
     const mineCountDisplay = document.getElementById('mineCountDisplay');
     const timerDisplay = document.getElementById('timerDisplay');
     const timeProgressBar = document.getElementById('timeProgressBar');
@@ -339,90 +335,149 @@
     const modeDigBtn = document.getElementById('modeDigBtn');
     const modeFlagBtn = document.getElementById('modeFlagBtn');
     const soundBtn = document.getElementById('soundBtn');
-    const setupBtn = document.getElementById('setupBtn');
+    const tierSelectorContainer = document.getElementById('tierSelectorContainer');
+    const customControls = document.getElementById('customControls');
     const statsBtn = document.getElementById('statsBtn');
-    const customConfigPanel = document.getElementById('customConfigPanel');
-    const resultModal = document.getElementById('resultModal');
     const statsModal = document.getElementById('statsModal');
-    const resultEmoji = document.getElementById('resultEmoji');
-    const resultTitle = document.getElementById('resultTitle');
-    const resultDesc = document.getElementById('resultDesc');
-    const statTime = document.getElementById('statTime');
-    const statBest = document.getElementById('statBest');
-    const retryBtn = document.getElementById('retryBtn');
-    const menuBtn = document.getElementById('menuBtn');
+    const closeStatsBtn = document.getElementById('closeStatsBtn');
+    const modalRecordsList = document.getElementById('modalRecordsList');
+    const setupDrawer = document.getElementById('setupDrawer');
+    const toggleSetupBtn = document.getElementById('toggleSetupBtn');
+    const activeTierBadge = document.getElementById('activeTierBadge');
 
-    function switchTier(tier) {
-      currentTier = tier;
-      ['beginner', 'intermediate', 'expert', 'custom'].forEach(t => {
-        const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
-        if (t === tier) {
-          btn.className = "py-2 rounded-xl text-xs font-black tracking-wider transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow";
-        } else {
-          btn.className = "py-2 rounded-xl text-xs font-bold text-indigo-300 hover:text-white transition";
-        }
-      });
+    toggleSetupBtn.onclick = () => {
+      setupDrawer.classList.toggle('hidden');
+      updateCellSizing();
+    };
 
-      customConfigPanel.classList.toggle('hidden', tier !== 'custom');
+    function updateCellSizing() {
+      if (!boardViewport) return;
+      const availWidth = window.innerWidth - 48;
+      const availHeight = window.innerHeight - (setupDrawer.classList.contains('hidden') ? 220 : 380);
 
-      if (tier === 'beginner') matchConfig = { type: 'beginner', rows: 9, cols: 9, mines: 10, targetSeconds: 45 };
-      else if (tier === 'intermediate') matchConfig = { type: 'intermediate', rows: 16, cols: 16, mines: 40, targetSeconds: 120 };
-      else if (tier === 'expert') matchConfig = { type: 'expert', rows: 16, cols: 30, mines: 99, targetSeconds: 240 };
-      else if (tier === 'custom') {
-        const r = parseInt(document.getElementById('cRows').value) || 12;
-        const c = parseInt(document.getElementById('cCols').value) || 12;
-        const m = parseInt(document.getElementById('cMines').value) || 20;
-        matchConfig = { type: 'custom', rows: r, cols: c, mines: m, targetSeconds: 180 };
-      }
+      const sizeFromWidth = Math.floor(availWidth / cols);
+      const sizeFromHeight = Math.floor(availHeight / rows);
+      
+      let calculatedSize = Math.min(sizeFromWidth, sizeFromHeight);
+      calculatedSize = Math.max(38, Math.min(72, calculatedSize));
 
-      subHeaderStatus.innerText = `${tier.charAt(0).toUpperCase() + tier.slice(1)} • Bronze (${matchConfig.targetSeconds}s)`;
-      initMatch();
+      document.documentElement.style.setProperty('--cell-size', `${calculatedSize}px`);
     }
 
-    setupBtn.onclick = () => {
-      customConfigPanel.classList.toggle('hidden');
-      if (!customConfigPanel.classList.contains('hidden')) switchTier('custom');
-    };
+    window.addEventListener('resize', updateCellSizing);
 
-    statsBtn.onclick = () => {
-      document.getElementById('statBeginnerBest').innerText = localStorage.getItem('ms_speed_beginner') ? `${localStorage.getItem('ms_speed_beginner')}s` : '--';
-      document.getElementById('statIntermediateBest').innerText = localStorage.getItem('ms_speed_intermediate') ? `${localStorage.getItem('ms_speed_intermediate')}s` : '--';
-      document.getElementById('statExpertBest').innerText = localStorage.getItem('ms_speed_expert') ? `${localStorage.getItem('ms_speed_expert')}s` : '--';
-      statsModal.classList.remove('hidden');
-    };
-
-    retryBtn.onclick = () => {
-      resultModal.classList.add('hidden');
-      initMatch();
-    };
-
-    menuBtn.onclick = () => {
-      resultModal.classList.add('hidden');
-      initMatch();
-    };
-
-    function initMatch() {
-      if (currentTier === 'custom') {
-        matchConfig.rows = parseInt(document.getElementById('cRows').value) || 12;
-        matchConfig.cols = parseInt(document.getElementById('cCols').value) || 12;
-        matchConfig.mines = parseInt(document.getElementById('cMines').value) || 20;
+    function renderTierSelector() {
+      tierSelectorContainer.innerHTML = '';
+      if (currentDifficulty === 'custom') {
+        tierSelectorContainer.classList.add('hidden');
+        customControls.classList.remove('hidden');
+        activeTierBadge.innerText = `Custom • ${rows}x${cols} (${mineCount} mines)`;
+        return;
       }
 
-      gameStatus = 'playing';
+      tierSelectorContainer.classList.remove('hidden');
+      customControls.classList.add('hidden');
+
+      const preset = PRESETS[currentDifficulty];
+      const unlockedList = speedData.unlocked[currentDifficulty] || ['bronze'];
+
+      ['bronze', 'silver', 'gold'].forEach(tKey => {
+        const tier = preset.tiers[tKey];
+        const isUnlocked = unlockedList.includes(tKey);
+        const isSelected = (currentTierKey === tKey);
+        const bestTime = speedData.records[tier.id];
+
+        if (isSelected) {
+          activeTierBadge.innerText = `${preset.name} • ${tier.icon} ${tier.name} (${tier.time}s)`;
+        }
+
+        const card = document.createElement('button');
+        card.className = `p-2 rounded-xl border text-left transition flex flex-col justify-between relative overflow-hidden ${tier.color} ${
+          isSelected ? 'ring-2 ring-fuchsia-400 border-fuchsia-400 scale-[1.02]' : 'opacity-85 hover:opacity-100'
+        } ${!isUnlocked ? 'opacity-40 grayscale cursor-not-allowed' : ''}`;
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between w-full mb-0.5">
+            <span class="text-base">${tier.icon}</span>
+            <span class="font-mono text-xs font-bold text-amber-400">${tier.time}s</span>
+          </div>
+          <div>
+            <div class="font-black text-[10px] uppercase tracking-wider text-indigo-100">${tier.name}</div>
+            <div class="text-[9px] text-indigo-300/70 font-medium">${bestTime ? 'Best: ' + bestTime.toFixed(1) + 's' : (isUnlocked ? 'Not beaten' : 'Locked')}</div>
+          </div>
+          ${!isUnlocked ? `<div class="absolute inset-0 bg-[#070913]/80 backdrop-blur-[1px] flex items-center justify-center font-bold text-xs text-indigo-300">🔒 Locked</div>` : ''}
+        `;
+
+        if (isUnlocked) {
+          card.onclick = () => {
+            currentTierKey = tKey;
+            setupGameConfig();
+            renderTierSelector();
+            resetGame();
+          };
+        }
+
+        tierSelectorContainer.appendChild(card);
+      });
+    }
+
+    function setupGameConfig() {
+      if (currentDifficulty === 'custom') {
+        rows = parseInt(document.getElementById('custRows').value) || 10;
+        cols = parseInt(document.getElementById('custCols').value) || 10;
+        mineCount = parseInt(document.getElementById('custMines').value) || 12;
+        targetTime = parseInt(document.getElementById('custTime').value) || 45;
+      } else {
+        const preset = PRESETS[currentDifficulty];
+        rows = preset.rows;
+        cols = preset.cols;
+        mineCount = preset.mines;
+        targetTime = preset.tiers[currentTierKey].time;
+      }
+      remainingTime = targetTime;
+      updateCellSizing();
+    }
+
+    document.querySelectorAll('.diff-tab').forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll('.diff-tab').forEach(t => {
+          t.classList.remove('bg-gradient-to-r', 'from-fuchsia-600', 'to-pink-600', 'text-white');
+          t.classList.add('text-indigo-300');
+        });
+        tab.classList.add('bg-gradient-to-r', 'from-fuchsia-600', 'to-pink-600', 'text-white');
+        tab.classList.remove('text-indigo-300');
+
+        currentDifficulty = tab.dataset.diff;
+        currentTierKey = 'bronze';
+        setupGameConfig();
+        renderTierSelector();
+        resetGame();
+      };
+    });
+
+    document.getElementById('startCustomBtn').onclick = () => {
+      setupGameConfig();
+      resetGame();
+      setupDrawer.classList.add('hidden');
+    };
+
+    function resetGame() {
+      clearInterval(timerInterval);
+      gameStatus = 'ready';
       firstClick = true;
       flagsPlaced = 0;
-      secondsElapsed = 0;
-      timerDisplay.innerText = '00.0';
-      timeProgressBar.style.width = '100%';
-      if (timerInterval) clearInterval(timerInterval);
+      remainingTime = targetTime;
 
-      resetBtn.innerText = '😎';
       updateCounters();
+      resetBtn.innerText = '😎';
+      timerDisplay.innerText = remainingTime.toFixed(1);
+      timeProgressBar.style.width = '100%';
+      timeProgressBar.className = "h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 w-full transition-all duration-100 ease-linear";
 
       board = [];
-      for (let r = 0; r < matchConfig.rows; r++) {
-        let row = [];
-        for (let c = 0; c < matchConfig.cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        const row = [];
+        for (let c = 0; c < cols; c++) {
           row.push({ mine: false, revealed: false, flagged: false, count: 0 });
         }
         board.push(row);
@@ -431,54 +486,17 @@
       renderGrid();
     }
 
-    function startTimer() {
-      if (timerInterval) return;
-      const startTime = Date.now();
-      timerInterval = setInterval(() => {
-        if (gameStatus === 'playing') {
-          secondsElapsed = (Date.now() - startTime) / 1000;
-          if (secondsElapsed > 999.9) secondsElapsed = 999.9;
-          timerDisplay.innerText = secondsElapsed.toFixed(1);
-
-          let pct = Math.max(0, 100 - (secondsElapsed / matchConfig.targetSeconds) * 100);
-          timeProgressBar.style.width = `${pct}%`;
-        }
-      }, 100);
-    }
-
-    function updateCellView(r, c) {
-      const el = document.getElementById(`cell-${r}-${c}`);
-      if (!el) return;
-      const cell = board[r][c];
-
-      if (cell.revealed) {
-        if (cell.count === 0) {
-          el.className = 'ms-cell ms-revealed-zero rounded-xl flex items-center justify-center';
-          el.innerHTML = '';
-        } else {
-          el.className = 'ms-cell ms-revealed-num rounded-xl flex items-center justify-center';
-          el.innerHTML = `<span class="num-${cell.count}">${cell.count}</span>`;
-        }
-      } else if (cell.flagged) {
-        el.className = 'ms-cell ms-unrevealed rounded-xl flex items-center justify-center';
-        el.innerText = '🚩';
-      } else {
-        el.className = 'ms-cell ms-unrevealed rounded-xl flex items-center justify-center';
-        el.innerText = '';
-      }
-    }
-
     function renderGrid() {
-      boardGrid.style.gridTemplateColumns = `repeat(${matchConfig.cols}, minmax(40px, 1fr))`;
+      updateCellSizing();
+      boardGrid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
       boardGrid.innerHTML = '';
 
-      for (let r = 0; r < matchConfig.rows; r++) {
-        for (let c = 0; c < matchConfig.cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
           const cellEl = document.createElement('button');
           cellEl.id = `cell-${r}-${c}`;
-          boardGrid.appendChild(cellEl);
-          updateCellView(r, c);
-
+          cellEl.className = 'ms-cell ms-unrevealed rounded-lg flex items-center justify-center';
+          
           cellEl.addEventListener('touchstart', (e) => handleTouchStart(e, r, c), { passive: false });
           cellEl.addEventListener('touchmove', (e) => handleTouchMove(e), { passive: true });
           cellEl.addEventListener('touchend', (e) => handleTouchEnd(e, r, c));
@@ -487,15 +505,20 @@
             e.preventDefault();
             toggleFlag(r, c);
           });
+
+          boardGrid.appendChild(cellEl);
         }
       }
     }
 
     function generateMines(safeR, safeC) {
       let placed = 0;
-      while (placed < matchConfig.mines) {
-        let r = Math.floor(Math.random() * matchConfig.rows);
-        let c = Math.floor(Math.random() * matchConfig.cols);
+      const totalCells = rows * cols;
+      const maxMines = Math.min(mineCount, totalCells - 9);
+
+      while (placed < maxMines) {
+        const r = Math.floor(Math.random() * rows);
+        const c = Math.floor(Math.random() * cols);
 
         if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
 
@@ -504,31 +527,30 @@
           placed++;
         }
       }
-      recalculateCounts();
-    }
 
-    function recalculateCounts() {
-      for (let r = 0; r < matchConfig.rows; r++) {
-        for (let c = 0; c < matchConfig.cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
           if (board[r][c].mine) continue;
           let cnt = 0;
           for (let dr = -1; dr <= 1; dr++) {
             for (let dc = -1; dc <= 1; dc++) {
-              let nr = r + dr, nc = c + dc;
-              if (nr >= 0 && nr < matchConfig.rows && nc >= 0 && nc < matchConfig.cols) {
-                if (board[nr][nc].mine) cnt++;
+              const nr = r + dr, nc = c + dc;
+              if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && board[nr][nc].mine) {
+                cnt++;
               }
             }
           }
           board[r][c].count = cnt;
-          if (board[r][c].revealed) updateCellView(r, c);
         }
       }
     }
 
     function handleCellClick(r, c) {
-      if (gameStatus !== 'playing') return;
-      if (isFlagMode) return toggleFlag(r, c);
+      if (gameStatus === 'won' || gameStatus === 'lost') return;
+      if (isFlagMode) {
+        toggleFlag(r, c);
+        return;
+      }
       digCell(r, c);
     }
 
@@ -539,11 +561,11 @@
       if (firstClick) {
         firstClick = false;
         generateMines(r, c);
-        startTimer();
+        startCountdown();
       }
 
       if (cell.mine) {
-        gameOver(false, '💥 You hit a mine!');
+        gameOver(false);
         return;
       }
 
@@ -553,93 +575,46 @@
     }
 
     function revealCell(r, c) {
-      if (r < 0 || r >= matchConfig.rows || c < 0 || c >= matchConfig.cols) return;
+      if (r < 0 || r >= rows || c < 0 || c >= cols) return;
       const cell = board[r][c];
       if (cell.revealed || cell.flagged) return;
 
       cell.revealed = true;
-      updateCellView(r, c);
+      const el = document.getElementById(`cell-${r}-${c}`);
+      if (!el) return;
+
+      el.classList.remove('ms-unrevealed');
 
       if (cell.count === 0) {
+        el.classList.add('ms-revealed-zero');
+        el.innerHTML = '';
         for (let dr = -1; dr <= 1; dr++) {
           for (let dc = -1; dc <= 1; dc++) {
-            if (dr !== 0 || dr !== 0) revealCell(r + dr, c + dc);
+            if (dr !== 0 || dc !== 0) revealCell(r + dr, c + dc);
           }
         }
+      } else {
+        el.classList.add('ms-revealed-num');
+        el.innerHTML = `<span class="num-${cell.count}">${cell.count}</span>`;
       }
     }
 
     function toggleFlag(r, c) {
-      if (gameStatus !== 'playing') return;
+      if (gameStatus === 'won' || gameStatus === 'lost') return;
       const cell = board[r][c];
       if (cell.revealed) return;
-
-      if (firstClick) {
-        firstClick = false;
-        generateMines(r, c);
-        startTimer();
-      }
 
       cell.flagged = !cell.flagged;
       flagsPlaced += cell.flagged ? 1 : -1;
       playSound('flag');
 
-      updateCellView(r, c);
+      const el = document.getElementById(`cell-${r}-${c}`);
+      if (el) {
+        el.innerText = cell.flagged ? '🚩' : '';
+      }
+
+      if (navigator.vibrate) navigator.vibrate(40);
       updateCounters();
-    }
-
-    function checkWinCondition() {
-      let safeLeft = 0;
-      for (let r = 0; r < matchConfig.rows; r++) {
-        for (let c = 0; c < matchConfig.cols; c++) {
-          if (!board[r][c].mine && !board[r][c].revealed) safeLeft++;
-        }
-      }
-
-      if (safeLeft === 0) {
-        gameOver(true, '🎉 Board cleared successfully!');
-      }
-    }
-
-    function gameOver(isWin, msg) {
-      if (timerInterval) clearInterval(timerInterval);
-      gameStatus = isWin ? 'won' : 'lost';
-      resetBtn.innerText = isWin ? '😎🏆' : '😵';
-      playSound(isWin ? 'win' : 'explode');
-
-      const storageKey = `ms_speed_${matchConfig.type}`;
-      let bestTime = localStorage.getItem(storageKey);
-      let finalSecs = parseFloat(secondsElapsed.toFixed(1));
-      if (isWin) {
-        if (!bestTime || finalSecs < parseFloat(bestTime)) {
-          bestTime = finalSecs;
-          localStorage.setItem(storageKey, bestTime);
-        }
-      }
-
-      statTime.innerText = `${finalSecs}s`;
-      statBest.innerText = bestTime ? `${bestTime}s` : '--';
-
-      resultEmoji.innerText = isWin ? '🏆' : '💀';
-      resultTitle.innerText = isWin ? 'VICTORY!' : 'DEFEAT';
-      resultTitle.className = `text-2xl font-black ${isWin ? 'text-emerald-400' : 'text-rose-500'}`;
-      resultDesc.innerText = msg;
-      resultModal.classList.remove('hidden');
-
-      for (let r = 0; r < matchConfig.rows; r++) {
-        for (let c = 0; c < matchConfig.cols; c++) {
-          const cell = board[r][c];
-          const el = document.getElementById(`cell-${r}-${c}`);
-          if (cell.mine && el) {
-            el.className = 'ms-cell rounded-xl flex items-center justify-center bg-rose-950/90 border border-rose-600';
-            el.innerText = '💣';
-          }
-        }
-      }
-    }
-
-    function updateCounters() {
-      mineCountDisplay.innerText = String(Math.max(0, matchConfig.mines - flagsPlaced)).padStart(3, '0');
     }
 
     function handleTouchStart(e, r, c) {
@@ -649,7 +624,9 @@
       isLongPressTriggered = false;
 
       const el = document.getElementById(`cell-${r}-${c}`);
-      if (el && !board[r][c].revealed) el.classList.add('ms-pressing');
+      if (el && !board[r][c].revealed) {
+        el.classList.add('ms-pressing');
+      }
 
       touchTimer = setTimeout(() => {
         isLongPressTriggered = true;
@@ -660,31 +637,132 @@
 
     function handleTouchMove(e) {
       if (!touchTimer) return;
-      if (Math.hypot(e.touches[0].clientX - touchStartX, e.touches[0].clientY - touchStartY) > TOUCH_MOVE_THRESHOLD) {
-        clearTimeout(touchTimer); touchTimer = null;
+      const moveX = e.touches[0].clientX;
+      const moveY = e.touches[0].clientY;
+      if (Math.hypot(moveX - touchStartX, moveY - touchStartY) > TOUCH_MOVE_THRESHOLD) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
         document.querySelectorAll('.ms-pressing').forEach(el => el.classList.remove('ms-pressing'));
       }
     }
 
     function handleTouchEnd(e, r, c) {
-      if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
+      if (touchTimer) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+      }
       document.querySelectorAll('.ms-pressing').forEach(el => el.classList.remove('ms-pressing'));
       if (isLongPressTriggered) e.preventDefault();
     }
 
+    function startCountdown() {
+      gameStatus = 'playing';
+      const startTime = Date.now();
+      const initialRemaining = remainingTime;
+
+      timerInterval = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        remainingTime = Math.max(0, initialRemaining - elapsed);
+        
+        timerDisplay.innerText = remainingTime.toFixed(1);
+
+        const pct = (remainingTime / targetTime) * 100;
+        timeProgressBar.style.width = `${pct}%`;
+
+        if (remainingTime <= 5 && remainingTime > 0) {
+          timerDisplay.classList.add('animate-pulse-danger');
+          if (Math.floor(remainingTime * 10) % 10 === 0) playSound('tick');
+        }
+
+        if (remainingTime <= 0) {
+          gameOver(false, true);
+        }
+      }, 100);
+    }
+
+    function checkWinCondition() {
+      let unrevealedNonMines = 0;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (!board[r][c].mine && !board[r][c].revealed) unrevealedNonMines++;
+        }
+      }
+      if (unrevealedNonMines === 0) gameOver(true);
+    }
+
+    function gameOver(isWin, isTimeout = false) {
+      clearInterval(timerInterval);
+      timerDisplay.classList.remove('animate-pulse-danger');
+
+      if (isWin) {
+        gameStatus = 'won';
+        resetBtn.innerText = '😎🏆';
+        playSound('win');
+
+        const timeTaken = targetTime - remainingTime;
+
+        if (currentDifficulty !== 'custom') {
+          const preset = PRESETS[currentDifficulty];
+          const tierObj = preset.tiers[currentTierKey];
+          
+          const prevRecord = speedData.records[tierObj.id];
+          if (!prevRecord || timeTaken < prevRecord) {
+            speedData.records[tierObj.id] = timeTaken;
+          }
+
+          if (currentTierKey === 'bronze' && !speedData.unlocked[currentDifficulty].includes('silver')) {
+            speedData.unlocked[currentDifficulty].push('silver');
+          } else if (currentTierKey === 'silver' && !speedData.unlocked[currentDifficulty].includes('gold')) {
+            speedData.unlocked[currentDifficulty].push('gold');
+          }
+
+          saveSpeedData();
+          renderTierSelector();
+        }
+
+        setTimeout(() => alert(`🎉 SPEED RUN VICTORY!\nCompleted in ${timeTaken.toFixed(2)} seconds!`), 100);
+
+      } else {
+        gameStatus = 'lost';
+        resetBtn.innerText = isTimeout ? '⏰💥' : '😵';
+        playSound('explode');
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const cell = board[r][c];
+            const el = document.getElementById(`cell-${r}-${c}`);
+            if (cell.mine && el) {
+              el.classList.remove('ms-unrevealed');
+              el.classList.add('bg-rose-950/90', 'border-rose-600');
+              el.innerText = '💣';
+            }
+          }
+        }
+
+        if (isTimeout) {
+          setTimeout(() => alert('⏰ TIME\'S UP! You ran out of time!'), 100);
+        }
+      }
+    }
+
+    function updateCounters() {
+      const remainingMines = mineCount - flagsPlaced;
+      mineCountDisplay.innerText = String(remainingMines).padStart(3, '0');
+    }
+
     modeDigBtn.onclick = () => {
       isFlagMode = false;
-      modeDigBtn.className = "flex-1 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow";
-      modeFlagBtn.className = "flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white";
+      modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow";
+      modeFlagBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white";
     };
 
     modeFlagBtn.onclick = () => {
       isFlagMode = true;
-      modeFlagBtn.className = "flex-1 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow";
-      modeDigBtn.className = "flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white";
+      modeFlagBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow";
+      modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white";
     };
 
-    resetBtn.onclick = () => initMatch();
+    resetBtn.onclick = resetGame;
 
     soundBtn.onclick = () => {
       soundEnabled = !soundEnabled;
@@ -692,8 +770,42 @@
       document.getElementById('soundOffIcon').classList.toggle('hidden', soundEnabled);
     };
 
-    // Initialize default beginner match
-    switchTier('beginner');
+    statsBtn.onclick = () => {
+      modalRecordsList.innerHTML = '';
+
+      Object.keys(PRESETS).forEach(dKey => {
+        const p = PRESETS[dKey];
+        const section = document.createElement('div');
+        section.className = 'bg-[#070913] p-3 rounded-xl border border-indigo-950 space-y-2';
+        
+        let html = `<div class="font-bold text-sm text-indigo-200 border-b border-indigo-950 pb-1">${p.name} Records</div>`;
+        ['bronze', 'silver', 'gold'].forEach(tKey => {
+          const t = p.tiers[tKey];
+          const rec = speedData.records[t.id];
+          const isUnlocked = speedData.unlocked[dKey].includes(tKey);
+
+          html += `
+            <div class="flex items-center justify-between text-xs">
+              <span class="flex items-center gap-1.5 font-medium text-indigo-300/80">
+                <span>${t.icon}</span> ${t.name} (Limit: ${t.time}s)
+              </span>
+              <span class="font-mono font-bold ${rec ? 'text-amber-400' : 'text-slate-600'}">
+                ${rec ? rec.toFixed(2) + 's' : (isUnlocked ? 'Not beaten' : 'Locked')}
+              </span>
+            </div>
+          `;
+        });
+
+        section.innerHTML = html;
+        modalRecordsList.appendChild(section);
+      });
+
+      statsModal.classList.remove('hidden');
+    };
+
+    closeStatsBtn.onclick = () => statsModal.classList.add('hidden');
+
+    document.querySelector('.diff-tab[data-diff="beginner"]').click();
   </script>
 </body>
 </html>
