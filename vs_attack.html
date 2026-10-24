@@ -712,8 +712,6 @@
         generateMines(r, c);
       }
 
-      checkRainbowCaptured(r, c);
-
       if (cell.mine) {
         gameOver(false, '💥 You hit a mine!', false);
         if (conn) conn.send({ type: 'GAME_OVER', reason: 'BOOM' });
@@ -731,6 +729,7 @@
       if (!cell.active || cell.revealed || cell.flagged) return;
 
       cell.revealed = true;
+      checkRainbowCaptured(r, c); // Trigger rainbow capture if revealed directly or indirectly via cascade
       updateCellView(r, c);
 
       if (cell.count === 0) {
