@@ -655,13 +655,13 @@
         rainbowCoord = null;
         board[r][c].rainbow = false;
         playSound('attack');
-        battleLog.innerText = `🌟 RAINBOW CAPTURED! -3 mines for you, +3 for opponent!`;
+        battleLog.innerText = `🌟 RAINBOW CAPTURED! -3 unflagged mines removed!`;
         
-        // Remove up to 3 unrevealed mines from self
+        // Remove up to 3 unrevealed AND unflagged mines from self
         let removed = 0;
         for (let ro = 0; ro < matchConfig.rows; ro++) {
           for (let co = 0; co < matchConfig.cols; co++) {
-            if (board[ro][co].mine && removed < 3 && !board[ro][co].revealed) {
+            if (board[ro][co].mine && removed < 3 && !board[ro][co].revealed && !board[ro][co].flagged) {
               board[ro][co].mine = false;
               removed++;
             }
@@ -671,10 +671,19 @@
         recalculateCounts();
         updateCounters();
 
-        // Check if mines dropped to 0 -> instant win
-        if (matchConfig.mines <= 0) {
+        // Check if all unflagged mines are cleared -> instant win screen
+        let unflaggedMinesLeft = 0;
+        for (let ro = 0; ro < matchConfig.rows; ro++) {
+          for (let co = 0; co < matchConfig.cols; co++) {
+            if (board[ro][co].active && board[ro][co].mine && !board[ro][co].flagged) {
+              unflaggedMinesLeft++;
+            }
+          }
+        }
+
+        if (unflaggedMinesLeft === 0) {
           if (rainbowTimeout) clearTimeout(rainbowTimeout);
-          gameOver(true, '🎉 All mines eradicated via rainbow power!', true);
+          gameOver(true, '🎉 All unflagged mines cleared via rainbow power!', true);
           if (conn) conn.send({ type: 'GAME_OVER', reason: 'CLEARED' });
           return;
         }
@@ -727,7 +736,7 @@
       if (cell.count === 0) {
         for (let dr = -1; dr <= 1; dr++) {
           for (let dc = -1; dc <= 1; dc++) {
-            if (dr !== 0 || dr !== 0) revealCell(r + dr, c + dc);
+            if (dr !== 0 || dc !== 0) revealCell(r + dr, c + dc);
           }
         }
       }
