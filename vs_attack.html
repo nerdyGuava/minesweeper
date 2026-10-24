@@ -7,13 +7,17 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
-    * { -webkit-touch-callout: none; }
+    * { 
+      touch-action: manipulation; 
+      -webkit-touch-callout: none; 
+    }
     
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #070913; }
     ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 4px; }
 
     #boardViewport {
+      touch-action: pan-x pan-y pinch-zoom;
       -webkit-overflow-scrolling: touch;
       overflow: auto;
     }
@@ -653,7 +657,7 @@
         playSound('attack');
         battleLog.innerText = `🌟 RAINBOW CAPTURED! -3 mines for you, +3 for opponent!`;
         
-        // Remove 3 mines from self (if possible)
+        // Remove up to 3 unrevealed mines from self
         let removed = 0;
         for (let ro = 0; ro < matchConfig.rows; ro++) {
           for (let co = 0; co < matchConfig.cols; co++) {
@@ -666,6 +670,14 @@
         matchConfig.mines = Math.max(0, matchConfig.mines - removed);
         recalculateCounts();
         updateCounters();
+
+        // Check if mines dropped to 0 -> instant win
+        if (matchConfig.mines <= 0) {
+          if (rainbowTimeout) clearTimeout(rainbowTimeout);
+          gameOver(true, '🎉 All mines eradicated via rainbow power!', true);
+          if (conn) conn.send({ type: 'GAME_OVER', reason: 'CLEARED' });
+          return;
+        }
 
         // Send attack to opponent (+3 mines)
         if (conn) conn.send({ type: 'ATTACK_MINES', count: 3 });
@@ -715,7 +727,7 @@
       if (cell.count === 0) {
         for (let dr = -1; dr <= 1; dr++) {
           for (let dc = -1; dc <= 1; dc++) {
-            if (dr !== 0 || dc !== 0) revealCell(r + dr, c + dc);
+            if (dr !== 0 || dr !== 0) revealCell(r + dr, c + dc);
           }
         }
       }
@@ -758,10 +770,11 @@
     }
 
     function receiveAttackMines(count) {
+      // Strictly find only unrevealed, non-mine, active spaces
       let candidates = [];
       for (let r = 0; r < matchConfig.rows; r++) {
         for (let c = 0; c < matchConfig.cols; c++) {
-          if (board[r][c].active && !board[r][c].mine) {
+          if (board[r][c].active && !board[r][c].mine && !board[r][c].revealed) {
             candidates.push({ r, c });
           }
         }
@@ -782,10 +795,14 @@
         }
       }
 
-      recalculateCounts();
-      playSound('explode');
-      battleLog.innerText = `⚠️ INCOMING ATTACK! Opponent blasted you with ${added} extra mine(s)!`;
-      updateCounters();
+      if (added > 0) {
+        recalculateCounts();
+        playSound('explode');
+        battleLog.innerText = `⚠️ INCOMING ATTACK! Opponent blasted you with ${added} extra mine(s)!`;
+        updateCounters();
+      } else {
+        battleLog.innerText = `⚠️ Incoming attack blocked—no open spaces left for mines!`;
+      }
     }
 
     function sendStateUpdate() {
@@ -854,7 +871,7 @@
     }
 
     function updateCounters() {
-      mineCountDisplay.innerText = String(matchConfig.mines - flagsPlaced).padStart(3, '0');
+      mineCountDisplay.innerText = String(Math.max(0, matchConfig.mines - flagsPlaced)).padStart(3, '0');
     }
 
     function handleTouchStart(e, r, c) {
