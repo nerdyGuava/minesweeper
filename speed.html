@@ -13,16 +13,32 @@
     ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #312e81; }
 
-    /* Dynamic Cell Sizing: Scales dynamically up to fill viewport */
     .ms-cell {
-      width: var(--cell-size, 46px);
-      height: var(--cell-size, 46px);
-      min-width: var(--cell-size, 46px);
-      min-height: var(--cell-size, 46px);
-      font-weight: 800;
-      font-size: calc(var(--cell-size, 46px) * 0.52);
-      user-select: none;
-      transition: background-color 0.1s, transform 0.05s, border-color 0.1s;
+        width: 40px;
+        height: 40px;
+        min-width: 40px;    /* <-- Ensures cells never squish */
+        min-height: 40px;   /* <-- Ensures cells never squish */
+        aspect-ratio: 1 / 1;
+        font-weight: 800;
+        font-size: 1.15rem;
+        user-select: none;
+        transition: background-color 0.1s, transform 0.05s;
+    }
+
+    .ms-void {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;    /* <-- Prevents void squishing */
+        min-height: 40px;   /* <-- Prevents void squishing */
+        aspect-ratio: 1 / 1;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    #boardViewport {
+        touch-action: pan-x pan-y pinch-zoom;
+        -webkit-overflow-scrolling: touch;
+        overflow: auto;
     }
 
     /* Cyber Unrevealed Cell */
@@ -179,7 +195,7 @@
 
     <!-- Maximized Board Viewport Container -->
     <div id="boardViewport" class="w-full flex-1 min-h-[60vh] flex justify-center items-center overflow-auto p-2 border border-indigo-950/80 rounded-xl bg-[#03050c]/80 backdrop-blur-md shadow-inner">
-      <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl transition-all">
+      <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl transition-all shrink-0">
         <!-- Dynamic cells -->
       </div>
     </div>
