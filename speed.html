@@ -83,81 +83,119 @@
     .num-8 { color: #94a3b8; }
   </style>
 </head>
-<body class="min-h-full flex flex-col justify-between overflow-y-auto pb-20">
+<body class="min-h-full flex flex-col justify-between overflow-y-auto pb-24">
 
   <!-- Header -->
-  <header class="bg-[#0b0f19] border-b border-indigo-950 px-4 py-2 flex items-center justify-between shadow-lg relative z-10">
+  <header class="bg-[#0b0f19] border-b border-indigo-950 px-4 py-3 flex items-center justify-between shadow-lg relative z-10">
     <div class="flex items-center gap-3">
-      <a href="hub.html" class="px-3 py-1.5 rounded-lg bg-indigo-950/60 border border-indigo-800/50 hover:bg-indigo-900/80 text-indigo-300 hover:text-white transition text-xs font-bold flex items-center gap-1.5">
+      <a href="hub.html" class="px-3 py-1.5 rounded-xl bg-indigo-950/60 border border-indigo-800/50 hover:bg-indigo-900/80 text-indigo-300 hover:text-white transition text-xs font-bold flex items-center gap-1.5 shadow">
         <span>🎮</span> <span>All Modes</span>
       </a>
       <div>
-        <h1 class="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-fuchsia-400 to-indigo-400 drop-shadow">
-          ⏱️ SPEED RUN MODE
+        <h1 class="text-lg sm:text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-fuchsia-400 to-indigo-400 drop-shadow flex items-center gap-2">
+          <span>⚡</span> SPEED RUN
         </h1>
-        <p class="text-[10px] text-slate-400 font-bold">Race against the clock for best times & medals!</p>
+        <p id="subHeaderStatus" class="text-[10px] text-amber-400 font-bold">Beginner • Bronze (45s)</p>
       </div>
     </div>
 
-    <button id="soundBtn" class="p-2 rounded-lg bg-indigo-950/60 border border-indigo-800/50 text-amber-400 hover:bg-indigo-900">
-      <svg id="soundOnIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"/></svg>
-      <svg id="soundOffIcon" class="w-5 h-5 hidden text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
-    </button>
+    <div class="flex items-center gap-2">
+      <button id="setupBtn" class="px-3 py-1.5 rounded-xl bg-indigo-950/60 border border-indigo-800/50 hover:bg-indigo-900 text-indigo-300 text-xs font-bold flex items-center gap-1.5 shadow">
+        <span>⚙️</span> Setup
+      </button>
+      <button id="soundBtn" class="p-2 rounded-xl bg-indigo-950/60 border border-indigo-800/50 text-amber-400 hover:bg-indigo-900 shadow">
+        <svg id="soundOnIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"/></svg>
+        <svg id="soundOffIcon" class="w-4 h-4 hidden text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
+      </button>
+      <button id="statsBtn" class="p-2 rounded-xl bg-indigo-950/60 border border-indigo-800/50 text-indigo-300 hover:bg-indigo-900 shadow">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      </button>
+    </div>
   </header>
 
-  <!-- DIFFICULTY SELECTION PANEL -->
-  <div id="lobbyContainer" class="max-w-xl mx-auto w-full p-4 space-y-4 my-auto">
-    <div class="bg-[#0b0f19] border border-indigo-900/80 rounded-2xl p-6 shadow-2xl space-y-6 text-center">
-      <div class="space-y-1">
-        <h2 class="text-2xl font-black text-white">Select Speed Run Tier</h2>
-        <p class="text-xs text-indigo-300/70">Clear the board as fast as possible to earn medals!</p>
+  <!-- MAIN DASHBOARD CONTENT -->
+  <main class="w-full max-w-4xl mx-auto p-4 flex flex-col items-center space-y-4">
+
+    <!-- Tier Navigation Tabs -->
+    <div class="grid grid-cols-4 gap-1 bg-[#0b0f19] p-1.5 rounded-2xl border border-indigo-950 w-full max-w-xl shadow-lg">
+      <button onclick="switchTier('beginner')" id="tabBeginner" class="py-2 rounded-xl text-xs font-black tracking-wider transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow">Beginner</button>
+      <button onclick="switchTier('intermediate')" id="tabIntermediate" class="py-2 rounded-xl text-xs font-bold text-indigo-300 hover:text-white transition">Intermediate</button>
+      <button onclick="switchTier('expert')" id="tabExpert" class="py-2 rounded-xl text-xs font-bold text-indigo-300 hover:text-white transition">Expert</button>
+      <button onclick="switchTier('custom')" id="tabCustom" class="py-2 rounded-xl text-xs font-bold text-indigo-300 hover:text-white transition">Custom</button>
+    </div>
+
+    <!-- Medal Cards Row -->
+    <div id="medalsContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-2xl">
+      <div class="bg-[#0b0f19] border-2 border-fuchsia-500 rounded-2xl p-3.5 shadow-xl flex items-center justify-between">
+        <div class="space-y-0.5">
+          <div class="text-[10px] text-amber-400 font-bold flex items-center gap-1"><span>🥉</span> BRONZE</div>
+          <div id="cardBronzeStatus" class="text-[11px] text-slate-400">Not beaten</div>
+        </div>
+        <div id="cardBronzeTime" class="text-sm font-black font-mono text-white">45s</div>
       </div>
 
-      <div class="space-y-3">
-        <select id="presetSelect" class="w-full bg-[#070913] border border-indigo-900 rounded-lg p-3 text-xs font-bold text-white">
-          <option value="beginner">Beginner (9x9 - 10 Mines)</option>
-          <option value="intermediate">Intermediate (16x16 - 40 Mines)</option>
-          <option value="expert">Expert (16x30 - 99 Mines)</option>
-          <option value="custom">Custom Configuration</option>
-        </select>
-
-        <div id="customInputs" class="hidden grid grid-cols-3 gap-2 text-xs">
-          <input type="number" id="cRows" value="10" placeholder="Rows" class="bg-[#070913] border border-indigo-900 p-2 rounded text-white font-bold">
-          <input type="number" id="cCols" value="10" placeholder="Cols" class="bg-[#070913] border border-indigo-900 p-2 rounded text-white font-bold">
-          <input type="number" id="cMines" value="15" placeholder="Mines" class="bg-[#070913] border border-indigo-900 p-2 rounded text-white font-bold">
+      <div class="bg-[#0b0f19]/60 border border-indigo-950 rounded-2xl p-3.5 shadow-xl flex items-center justify-between opacity-75">
+        <div class="space-y-0.5">
+          <div class="text-[10px] text-slate-400 font-bold flex items-center gap-1"><span>🥈</span> SILVER</div>
+          <div class="text-[11px] text-slate-500">Locked</div>
         </div>
+        <div class="text-sm font-black font-mono text-slate-500">30s</div>
+      </div>
 
-        <button id="startSpeedRunBtn" class="w-full py-3 bg-gradient-to-r from-amber-500 via-fuchsia-600 to-indigo-600 hover:opacity-90 text-white font-black rounded-xl text-xs tracking-wider uppercase shadow-lg">
-          Start Speed Run ⏱️
-        </button>
+      <div class="bg-[#0b0f19]/60 border border-indigo-950 rounded-2xl p-3.5 shadow-xl flex items-center justify-between opacity-75">
+        <div class="space-y-0.5">
+          <div class="text-[10px] text-amber-300 font-bold flex items-center gap-1"><span>🥇</span> GOLD</div>
+          <div class="text-[11px] text-slate-500">Locked</div>
+        </div>
+        <div class="text-sm font-black font-mono text-slate-500">18s</div>
       </div>
     </div>
-  </div>
 
-  <!-- GAMEPLAY AREA -->
-  <main id="gameMain" class="hidden flex-1 flex flex-col items-center justify-start p-2 w-full">
-    <div class="w-full max-w-lg bg-[#0b0f19] border border-indigo-900/50 rounded-xl p-2.5 mb-2 shadow-lg space-y-2 relative z-20">
-      <div class="flex items-center justify-between text-sm font-black">
-        <div class="flex items-center gap-1.5 bg-[#070913] px-3 py-1.5 rounded-lg border border-indigo-950">
-          <span class="text-rose-400 text-base">💣</span>
-          <span id="mineCountDisplay" class="font-mono text-indigo-100">000</span>
+    <!-- Custom Config Inputs (Hidden by default) -->
+    <div id="customConfigPanel" class="hidden w-full max-w-xl bg-[#0b0f19] border border-indigo-900 rounded-2xl p-4 shadow-xl grid grid-cols-3 gap-3 text-xs">
+      <div>
+        <label class="block text-[10px] text-indigo-300 font-bold mb-1">ROWS</label>
+        <input type="number" id="cRows" value="12" class="w-full bg-[#070913] border border-indigo-900 p-2 rounded-xl text-white font-bold text-center">
+      </div>
+      <div>
+        <label class="block text-[10px] text-indigo-300 font-bold mb-1">COLS</label>
+        <input type="number" id="cCols" value="12" class="w-full bg-[#070913] border border-indigo-900 p-2 rounded-xl text-white font-bold text-center">
+      </div>
+      <div>
+        <label class="block text-[10px] text-indigo-300 font-bold mb-1">MINES</label>
+        <input type="number" id="cMines" value="20" class="w-full bg-[#070913] border border-indigo-900 p-2 rounded-xl text-white font-bold text-center">
+      </div>
+    </div>
+
+    <!-- HUD Control Bar (Bombs, Face Emoji, Timer & Progress Bar) -->
+    <div class="w-full max-w-xl bg-[#0b0f19] border border-indigo-900/80 rounded-2xl p-3 shadow-xl space-y-2.5">
+      <div class="flex items-center justify-between px-2">
+        <div class="flex items-center gap-2 bg-[#070913] px-3 py-1.5 rounded-xl border border-indigo-950">
+          <span class="text-rose-400">💣</span>
+          <span id="mineCountDisplay" class="font-mono font-black text-indigo-100 text-sm">010</span>
         </div>
 
-        <button id="resetBtn" class="px-4 py-1.5 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 rounded-lg text-xl active:scale-95 shadow">
+        <button id="resetBtn" class="px-5 py-1.5 bg-indigo-950 hover:bg-indigo-900 border border-indigo-800 rounded-xl text-2xl active:scale-95 shadow">
           😎
         </button>
 
-        <div class="flex items-center gap-1.5 bg-[#070913] px-3 py-1.5 rounded-lg border border-indigo-950">
-          <span class="text-amber-400 text-base">⏱️</span>
-          <span id="timerDisplay" class="font-mono text-amber-400">000</span>
+        <div class="flex items-center gap-2 bg-[#070913] px-3 py-1.5 rounded-xl border border-indigo-950">
+          <span class="text-amber-400">⏱️</span>
+          <span id="timerDisplay" class="font-mono font-black text-amber-400 text-sm">00.0</span>
         </div>
+      </div>
+
+      <!-- Target Countdown Progress Bar -->
+      <div class="w-full bg-[#070913] h-2.5 rounded-full overflow-hidden p-0.5 border border-indigo-950">
+        <div id="timeProgressBar" class="bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500 h-full rounded-full transition-all duration-300" style="width: 100%;"></div>
       </div>
     </div>
 
-    <!-- Scrollable Board Viewport -->
-    <div id="boardViewport" class="w-full flex justify-start sm:justify-center items-start overflow-auto p-4 border border-indigo-950/80 rounded-xl bg-[#03050c]/80 backdrop-blur-md shadow-inner">
-      <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl shrink-0"></div>
+    <!-- Scrollable Board Viewport (Fixed Cell Sizes & No Squishing) -->
+    <div id="boardViewport" class="w-full flex justify-start sm:justify-center items-start overflow-auto p-4 border border-indigo-950/80 rounded-2xl bg-[#03050c]/80 backdrop-blur-md shadow-inner max-h-[60vh]">
+      <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-2xl border border-indigo-900/50 shadow-2xl shrink-0"></div>
     </div>
+
   </main>
 
   <!-- MATCH RESULT OVERLAY MODAL -->
@@ -172,7 +210,7 @@
       <div class="bg-[#070913] border border-indigo-950 rounded-xl p-3 text-xs space-y-2 text-left">
         <div class="flex justify-between font-bold">
           <span class="text-indigo-300/70">Final Time:</span>
-          <span id="statTime" class="text-amber-400 font-mono">0s</span>
+          <span id="statTime" class="text-amber-400 font-mono">0.0s</span>
         </div>
         <div class="flex justify-between font-bold">
           <span class="text-indigo-300/70">Personal Best:</span>
@@ -191,12 +229,37 @@
     </div>
   </div>
 
-  <div id="gameFooter" class="hidden fixed bottom-0 left-0 w-full bg-[#0b0f19]/95 border-t border-indigo-950 p-2 backdrop-blur z-30 flex justify-center">
-    <div class="flex bg-[#070913] p-1 rounded-xl border border-indigo-900 shadow-inner w-full max-w-xs">
-      <button id="modeDigBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow">
+  <!-- STATS OVERLAY MODAL -->
+  <div id="statsModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#0b0f19] border border-indigo-900/80 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-indigo-950 pb-3">
+        <h2 class="text-lg font-black text-white flex items-center gap-2"><span>📊</span> Speed Run Statistics</h2>
+        <button onclick="document.getElementById('statsModal').classList.add('hidden')" class="text-slate-400 hover:text-white font-bold text-sm">✕</button>
+      </div>
+      <div id="statsContent" class="space-y-3 text-xs">
+        <div class="flex justify-between p-3 bg-[#070913] rounded-xl border border-indigo-950 font-bold">
+          <span class="text-indigo-300">Beginner Best:</span>
+          <span id="statBeginnerBest" class="text-amber-400 font-mono">--</span>
+        </div>
+        <div class="flex justify-between p-3 bg-[#070913] rounded-xl border border-indigo-950 font-bold">
+          <span class="text-indigo-300">Intermediate Best:</span>
+          <span id="statIntermediateBest" class="text-amber-400 font-mono">--</span>
+        </div>
+        <div class="flex justify-between p-3 bg-[#070913] rounded-xl border border-indigo-950 font-bold">
+          <span class="text-indigo-300">Expert Best:</span>
+          <span id="statExpertBest" class="text-amber-400 font-mono">--</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Mode Switcher Footer -->
+  <div class="fixed bottom-0 left-0 w-full bg-[#0b0f19]/95 border-t border-indigo-950 p-3 backdrop-blur z-30 flex justify-center">
+    <div class="flex bg-[#070913] p-1.5 rounded-2xl border border-indigo-900 shadow-inner w-full max-w-xs">
+      <button id="modeDigBtn" class="flex-1 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow">
         <span>⛏️</span> DIG MODE
       </button>
-      <button id="modeFlagBtn" class="flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white">
+      <button id="modeFlagBtn" class="flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white">
         <span>🚩</span> FLAG MODE
       </button>
     </div>
@@ -253,7 +316,8 @@
       }
     }
 
-    let matchConfig = { type: 'beginner', rows: 9, cols: 9, mines: 10 };
+    let currentTier = 'beginner';
+    let matchConfig = { type: 'beginner', rows: 9, cols: 9, mines: 10, targetSeconds: 45 };
     let board = [];
     let gameStatus = 'waiting';
     let firstClick = true;
@@ -266,20 +330,20 @@
     let isLongPressTriggered = false;
     const LONG_PRESS_MS = 280, TOUCH_MOVE_THRESHOLD = 10;
 
-    const presetSelect = document.getElementById('presetSelect');
-    const customInputs = document.getElementById('customInputs');
-    const startSpeedRunBtn = document.getElementById('startSpeedRunBtn');
-    const lobbyContainer = document.getElementById('lobbyContainer');
-    const gameMain = document.getElementById('gameMain');
-    const gameFooter = document.getElementById('gameFooter');
+    const subHeaderStatus = document.getElementById('subHeaderStatus');
     const boardGrid = document.getElementById('boardGrid');
     const mineCountDisplay = document.getElementById('mineCountDisplay');
     const timerDisplay = document.getElementById('timerDisplay');
+    const timeProgressBar = document.getElementById('timeProgressBar');
     const resetBtn = document.getElementById('resetBtn');
     const modeDigBtn = document.getElementById('modeDigBtn');
     const modeFlagBtn = document.getElementById('modeFlagBtn');
     const soundBtn = document.getElementById('soundBtn');
+    const setupBtn = document.getElementById('setupBtn');
+    const statsBtn = document.getElementById('statsBtn');
+    const customConfigPanel = document.getElementById('customConfigPanel');
     const resultModal = document.getElementById('resultModal');
+    const statsModal = document.getElementById('statsModal');
     const resultEmoji = document.getElementById('resultEmoji');
     const resultTitle = document.getElementById('resultTitle');
     const resultDesc = document.getElementById('resultDesc');
@@ -288,29 +352,43 @@
     const retryBtn = document.getElementById('retryBtn');
     const menuBtn = document.getElementById('menuBtn');
 
-    presetSelect.onchange = () => {
-      customInputs.classList.toggle('hidden', presetSelect.value !== 'custom');
-    };
+    function switchTier(tier) {
+      currentTier = tier;
+      ['beginner', 'intermediate', 'expert', 'custom'].forEach(t => {
+        const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (t === tier) {
+          btn.className = "py-2 rounded-xl text-xs font-black tracking-wider transition bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow";
+        } else {
+          btn.className = "py-2 rounded-xl text-xs font-bold text-indigo-300 hover:text-white transition";
+        }
+      });
 
-    startSpeedRunBtn.onclick = () => {
-      const type = presetSelect.value;
-      let r = 9, c = 9, m = 10;
+      customConfigPanel.classList.toggle('hidden', tier !== 'custom');
 
-      if (type === 'intermediate') { r = 16; c = 16; m = 40; }
-      else if (type === 'expert') { r = 16; c = 30; m = 99; }
-      else if (type === 'custom') {
-        r = parseInt(document.getElementById('cRows').value) || 10;
-        c = parseInt(document.getElementById('cCols').value) || 10;
-        m = parseInt(document.getElementById('cMines').value) || 15;
+      if (tier === 'beginner') matchConfig = { type: 'beginner', rows: 9, cols: 9, mines: 10, targetSeconds: 45 };
+      else if (tier === 'intermediate') matchConfig = { type: 'intermediate', rows: 16, cols: 16, mines: 40, targetSeconds: 120 };
+      else if (tier === 'expert') matchConfig = { type: 'expert', rows: 16, cols: 30, mines: 99, targetSeconds: 240 };
+      else if (tier === 'custom') {
+        const r = parseInt(document.getElementById('cRows').value) || 12;
+        const c = parseInt(document.getElementById('cCols').value) || 12;
+        const m = parseInt(document.getElementById('cMines').value) || 20;
+        matchConfig = { type: 'custom', rows: r, cols: c, mines: m, targetSeconds: 180 };
       }
 
-      matchConfig = { type, rows: r, cols: c, mines: m };
-      
-      lobbyContainer.classList.add('hidden');
-      gameMain.classList.remove('hidden');
-      gameFooter.classList.remove('hidden');
-      resultModal.classList.add('hidden');
+      subHeaderStatus.innerText = `${tier.charAt(0).toUpperCase() + tier.slice(1)} • Bronze (${matchConfig.targetSeconds}s)`;
       initMatch();
+    }
+
+    setupBtn.onclick = () => {
+      customConfigPanel.classList.toggle('hidden');
+      if (!customConfigPanel.classList.contains('hidden')) switchTier('custom');
+    };
+
+    statsBtn.onclick = () => {
+      document.getElementById('statBeginnerBest').innerText = localStorage.getItem('ms_speed_beginner') ? `${localStorage.getItem('ms_speed_beginner')}s` : '--';
+      document.getElementById('statIntermediateBest').innerText = localStorage.getItem('ms_speed_intermediate') ? `${localStorage.getItem('ms_speed_intermediate')}s` : '--';
+      document.getElementById('statExpertBest').innerText = localStorage.getItem('ms_speed_expert') ? `${localStorage.getItem('ms_speed_expert')}s` : '--';
+      statsModal.classList.remove('hidden');
     };
 
     retryBtn.onclick = () => {
@@ -320,17 +398,22 @@
 
     menuBtn.onclick = () => {
       resultModal.classList.add('hidden');
-      gameMain.classList.add('hidden');
-      gameFooter.classList.add('hidden');
-      lobbyContainer.classList.remove('hidden');
+      initMatch();
     };
 
     function initMatch() {
+      if (currentTier === 'custom') {
+        matchConfig.rows = parseInt(document.getElementById('cRows').value) || 12;
+        matchConfig.cols = parseInt(document.getElementById('cCols').value) || 12;
+        matchConfig.mines = parseInt(document.getElementById('cMines').value) || 20;
+      }
+
       gameStatus = 'playing';
       firstClick = true;
       flagsPlaced = 0;
       secondsElapsed = 0;
-      timerDisplay.innerText = '000';
+      timerDisplay.innerText = '00.0';
+      timeProgressBar.style.width = '100%';
       if (timerInterval) clearInterval(timerInterval);
 
       resetBtn.innerText = '😎';
@@ -350,13 +433,17 @@
 
     function startTimer() {
       if (timerInterval) return;
+      const startTime = Date.now();
       timerInterval = setInterval(() => {
         if (gameStatus === 'playing') {
-          secondsElapsed++;
-          if (secondsElapsed > 999) secondsElapsed = 999;
-          timerDisplay.innerText = String(secondsElapsed).padStart(3, '0');
+          secondsElapsed = (Date.now() - startTime) / 1000;
+          if (secondsElapsed > 999.9) secondsElapsed = 999.9;
+          timerDisplay.innerText = secondsElapsed.toFixed(1);
+
+          let pct = Math.max(0, 100 - (secondsElapsed / matchConfig.targetSeconds) * 100);
+          timeProgressBar.style.width = `${pct}%`;
         }
-      }, 1000);
+      }, 100);
     }
 
     function updateCellView(r, c) {
@@ -366,17 +453,17 @@
 
       if (cell.revealed) {
         if (cell.count === 0) {
-          el.className = 'ms-cell ms-revealed-zero rounded-lg flex items-center justify-center';
+          el.className = 'ms-cell ms-revealed-zero rounded-xl flex items-center justify-center';
           el.innerHTML = '';
         } else {
-          el.className = 'ms-cell ms-revealed-num rounded-lg flex items-center justify-center';
+          el.className = 'ms-cell ms-revealed-num rounded-xl flex items-center justify-center';
           el.innerHTML = `<span class="num-${cell.count}">${cell.count}</span>`;
         }
       } else if (cell.flagged) {
-        el.className = 'ms-cell ms-unrevealed rounded-lg flex items-center justify-center';
+        el.className = 'ms-cell ms-unrevealed rounded-xl flex items-center justify-center';
         el.innerText = '🚩';
       } else {
-        el.className = 'ms-cell ms-unrevealed rounded-lg flex items-center justify-center';
+        el.className = 'ms-cell ms-unrevealed rounded-xl flex items-center justify-center';
         el.innerText = '';
       }
     }
@@ -522,14 +609,15 @@
 
       const storageKey = `ms_speed_${matchConfig.type}`;
       let bestTime = localStorage.getItem(storageKey);
+      let finalSecs = parseFloat(secondsElapsed.toFixed(1));
       if (isWin) {
-        if (!bestTime || secondsElapsed < parseInt(bestTime)) {
-          bestTime = secondsElapsed;
+        if (!bestTime || finalSecs < parseFloat(bestTime)) {
+          bestTime = finalSecs;
           localStorage.setItem(storageKey, bestTime);
         }
       }
 
-      statTime.innerText = `${secondsElapsed}s`;
+      statTime.innerText = `${finalSecs}s`;
       statBest.innerText = bestTime ? `${bestTime}s` : '--';
 
       resultEmoji.innerText = isWin ? '🏆' : '💀';
@@ -543,7 +631,7 @@
           const cell = board[r][c];
           const el = document.getElementById(`cell-${r}-${c}`);
           if (cell.mine && el) {
-            el.className = 'ms-cell rounded-lg flex items-center justify-center bg-rose-950/90 border border-rose-600';
+            el.className = 'ms-cell rounded-xl flex items-center justify-center bg-rose-950/90 border border-rose-600';
             el.innerText = '💣';
           }
         }
@@ -586,25 +674,26 @@
 
     modeDigBtn.onclick = () => {
       isFlagMode = false;
-      modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow";
-      modeFlagBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white";
+      modeDigBtn.className = "flex-1 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow";
+      modeFlagBtn.className = "flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white";
     };
 
     modeFlagBtn.onclick = () => {
       isFlagMode = true;
-      modeFlagBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow";
-      modeDigBtn.className = "flex-1 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white";
+      modeFlagBtn.className = "flex-1 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow";
+      modeDigBtn.className = "flex-1 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition text-indigo-300 hover:text-white";
     };
 
-    resetBtn.onclick = () => {
-      initMatch();
-    };
+    resetBtn.onclick = () => initMatch();
 
     soundBtn.onclick = () => {
       soundEnabled = !soundEnabled;
       document.getElementById('soundOnIcon').classList.toggle('hidden', !soundEnabled);
       document.getElementById('soundOffIcon').classList.toggle('hidden', soundEnabled);
     };
+
+    // Initialize default beginner match
+    switchTier('beginner');
   </script>
 </body>
 </html>
