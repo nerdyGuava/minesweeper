@@ -3,18 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Minesweeper - 1v1 VS Mode</title>
+  <title>Minesweeper - 1v1 Versus Mode</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <style>
-    /* Removed global touch-action constraint to allow completely free diagonal mobile scrolling */
-    * { -webkit-touch-callout: none; }
+    * { 
+      touch-action: manipulation; 
+      -webkit-touch-callout: none; 
+    }
     
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #070913; }
     ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 4px; }
 
     #boardViewport {
+      touch-action: pan-x pan-y pinch-zoom;
       -webkit-overflow-scrolling: touch;
       overflow: auto;
     }
@@ -99,7 +102,7 @@
       </a>
       <div>
         <h1 class="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-fuchsia-400 to-amber-400 drop-shadow">
-          ⚔️ 1v1 VERSUS MODE
+          ⚔️ 1V1 VERSUS MODE
         </h1>
         <p id="connectionStatus" class="text-[10px] text-slate-400 font-bold">Offline • Connect or Host a Lobby</p>
       </div>
@@ -116,7 +119,7 @@
     <div class="bg-[#0b0f19] border border-indigo-900/80 rounded-2xl p-6 shadow-2xl space-y-6 text-center">
       <div class="space-y-1">
         <h2 class="text-2xl font-black text-white">Versus Lobby</h2>
-        <p class="text-xs text-indigo-300/70">Play peer-to-peer real-time Minesweeper against a friend!</p>
+        <p class="text-xs text-indigo-300/70">Flag correct bombs to send incoming mine attacks to your opponent!</p>
       </div>
 
       <div class="bg-[#070913] p-4 rounded-xl border border-indigo-950 space-y-3">
@@ -190,11 +193,11 @@
       </div>
 
       <div id="battleLog" class="text-[11px] font-bold text-center text-amber-300 h-4 overflow-hidden truncate">
-        Match started! Correctly flag 10 mines to send an extra mine to your opponent!
+        Versus match started! Every 10 correct flags sends extra mines to your opponent!
       </div>
     </div>
 
-    <!-- Scrollable Board Viewport with Unrestricted 360-degree Panning -->
+    <!-- Scrollable Board Viewport -->
     <div id="boardViewport" class="w-full flex justify-start sm:justify-center items-start overflow-auto p-4 border border-indigo-950/80 rounded-xl bg-[#03050c]/80 backdrop-blur-md shadow-inner">
       <div id="boardGrid" class="grid gap-1 bg-[#0b0f19] p-3 rounded-xl border border-indigo-900/50 shadow-2xl shrink-0"></div>
     </div>
@@ -422,13 +425,13 @@
           gameMain.classList.remove('hidden');
           gameFooter.classList.remove('hidden');
           resultModal.classList.add('hidden');
-          connectionStatus.innerText = '🟢 Live VS Match Active';
+          connectionStatus.innerText = '🟢 Live Versus Match Active';
           initMatch();
         } else if (data.type === 'STATE_UPDATE') {
           oppSafeLeft = data.safeLeft;
           oppSafeLeftEl.innerText = String(oppSafeLeft).padStart(2, '0');
-        } else if (data.type === 'ATTACK_MINE') {
-          receiveAttackMine();
+        } else if (data.type === 'ATTACK_MINES') {
+          receiveAttackMines(data.count);
         } else if (data.type === 'GAME_OVER') {
           if (data.reason === 'BOOM') {
             battleLog.innerText = '💥 Opponent detonated a mine! YOU WIN!';
@@ -465,7 +468,7 @@
       gameMain.classList.remove('hidden');
       gameFooter.classList.remove('hidden');
       resultModal.classList.add('hidden');
-      connectionStatus.innerText = '🟢 Live VS Match Active';
+      connectionStatus.innerText = '🟢 Live Versus Match Active';
 
       conn.send({ type: 'START_MATCH', config: matchConfig });
       initMatch();
@@ -479,7 +482,7 @@
       lastAttackMilestone = 0;
 
       resetBtn.innerText = '😎';
-      battleLog.innerText = '⚔️ Battle Started! Correctly flag 10 mines to attack!';
+      battleLog.innerText = 'Versus match started! Flag 10 correct bombs to strike your opponent!';
 
       board = [];
       for (let r = 0; r < matchConfig.rows; r++) {
@@ -500,21 +503,46 @@
       sendStateUpdate();
     }
 
+    function updateCellView(r, c) {
+      const el = document.getElementById(`cell-${r}-${c}`);
+      if (!el) return;
+      const cell = board[r][c];
+
+      if (!cell.active) {
+        el.className = 'ms-void';
+        return;
+      }
+
+      if (cell.revealed) {
+        if (cell.count === 0) {
+          el.className = 'ms-cell ms-revealed-zero rounded-lg flex items-center justify-center';
+          el.innerHTML = '';
+        } else {
+          el.className = 'ms-cell ms-revealed-num rounded-lg flex items-center justify-center';
+          el.innerHTML = `<span class="num-${cell.count}">${cell.count}</span>`;
+        }
+      } else if (cell.flagged) {
+        el.className = 'ms-cell ms-unrevealed rounded-lg flex items-center justify-center';
+        el.innerText = '🚩';
+      } else {
+        el.className = 'ms-cell ms-unrevealed rounded-lg flex items-center justify-center';
+        el.innerText = '';
+      }
+    }
+
     function renderGrid() {
       boardGrid.style.gridTemplateColumns = `repeat(${matchConfig.cols}, minmax(40px, 1fr))`;
       boardGrid.innerHTML = '';
 
       for (let r = 0; r < matchConfig.rows; r++) {
         for (let c = 0; c < matchConfig.cols; c++) {
-          const cellData = board[r][c];
           const cellEl = document.createElement('button');
           cellEl.id = `cell-${r}-${c}`;
+          boardGrid.appendChild(cellEl);
+          updateCellView(r, c);
 
-          if (!cellData.active) {
-            cellEl.className = 'ms-void';
-          } else {
-            cellEl.className = 'ms-cell ms-unrevealed rounded-lg flex items-center justify-center';
-            
+          const cellData = board[r][c];
+          if (cellData.active) {
             cellEl.addEventListener('touchstart', (e) => handleTouchStart(e, r, c), { passive: false });
             cellEl.addEventListener('touchmove', (e) => handleTouchMove(e), { passive: true });
             cellEl.addEventListener('touchend', (e) => handleTouchEnd(e, r, c));
@@ -524,8 +552,6 @@
               toggleFlag(r, c);
             });
           }
-
-          boardGrid.appendChild(cellEl);
         }
       }
     }
@@ -561,19 +587,7 @@
             }
           }
           board[r][c].count = cnt;
-
-          if (board[r][c].revealed) {
-            const el = document.getElementById(`cell-${r}-${c}`);
-            if (el) {
-              if (board[r][c].count === 0) {
-                el.className = 'ms-cell ms-revealed-zero rounded-lg flex items-center justify-center';
-                el.innerHTML = '';
-              } else {
-                el.className = 'ms-cell ms-revealed-num rounded-lg flex items-center justify-center';
-                el.innerHTML = `<span class="num-${board[r][c].count}">${board[r][c].count}</span>`;
-              }
-            }
-          }
+          if (board[r][c].revealed) updateCellView(r, c);
         }
       }
     }
@@ -610,22 +624,14 @@
       if (!cell.active || cell.revealed || cell.flagged) return;
 
       cell.revealed = true;
-      const el = document.getElementById(`cell-${r}-${c}`);
-      if (!el) return;
-
-      el.classList.remove('ms-unrevealed');
+      updateCellView(r, c);
 
       if (cell.count === 0) {
-        el.classList.add('ms-revealed-zero');
-        el.innerHTML = '';
         for (let dr = -1; dr <= 1; dr++) {
           for (let dc = -1; dc <= 1; dc++) {
-            if (dr !== 0 || dc !== 0) revealCell(r + dr, c + dc);
+            if (dr !== 0 || dr !== 0) revealCell(r + dr, c + dc);
           }
         }
-      } else {
-        el.classList.add('ms-revealed-num');
-        el.innerHTML = `<span class="num-${cell.count}">${cell.count}</span>`;
       }
     }
 
@@ -638,9 +644,7 @@
       flagsPlaced += cell.flagged ? 1 : -1;
       playSound('flag');
 
-      const el = document.getElementById(`cell-${r}-${c}`);
-      if (el) el.innerText = cell.flagged ? '🚩' : '';
-
+      updateCellView(r, c);
       recountCorrectFlags();
       updateCounters();
       sendStateUpdate();
@@ -661,37 +665,44 @@
         lastAttackMilestone = milestone;
         playSound('attack');
         battleLog.innerText = `🚀 10 BOMBS FLAGGED! Sent extra mine attack to opponent!`;
-        if (conn) conn.send({ type: 'ATTACK_MINE' });
+        if (conn) conn.send({ type: 'ATTACK_MINES', count: 3 });
       }
     }
 
-    function receiveAttackMine() {
+    function receiveAttackMines(count) {
+      // Strictly find only unrevealed, non-mine, active spaces
       let candidates = [];
       for (let r = 0; r < matchConfig.rows; r++) {
         for (let c = 0; c < matchConfig.cols; c++) {
-          if (board[r][c].active && !board[r][c].mine) {
+          if (board[r][c].active && !board[r][c].mine && !board[r][c].revealed) {
             candidates.push({ r, c });
           }
         }
       }
 
-      if (candidates.length === 0) return;
+      let added = 0;
+      for (let i = 0; i < count && candidates.length > 0; i++) {
+        let idx = Math.floor(Math.random() * candidates.length);
+        let target = candidates.splice(idx, 1)[0];
+        board[target.r][target.c].mine = true;
+        matchConfig.mines++;
+        added++;
 
-      const target = candidates[Math.floor(Math.random() * candidates.length)];
-      board[target.r][target.c].mine = true;
-      matchConfig.mines++;
-
-      recalculateCounts();
-      playSound('explode');
-      battleLog.innerText = `⚠️ INCOMING ATTACK! Opponent dropped an extra mine on your board!`;
-
-      const el = document.getElementById(`cell-${target.r}-${target.c}`);
-      if (el) {
-        el.classList.add('animate-attack');
-        setTimeout(() => el.classList.remove('animate-attack'), 1200);
+        const el = document.getElementById(`cell-${target.r}-${target.c}`);
+        if (el) {
+          el.classList.add('animate-attack');
+          setTimeout(() => el.classList.remove('animate-attack'), 1200);
+        }
       }
 
-      updateCounters();
+      if (added > 0) {
+        recalculateCounts();
+        playSound('explode');
+        battleLog.innerText = `⚠️ INCOMING ATTACK! Opponent blasted you with ${added} extra mine(s)!`;
+        updateCounters();
+      } else {
+        battleLog.innerText = `⚠️ Incoming attack blocked—no open spaces left for mines!`;
+      }
     }
 
     function sendStateUpdate() {
@@ -742,8 +753,7 @@
           const cell = board[r][c];
           const el = document.getElementById(`cell-${r}-${c}`);
           if (cell.active && cell.mine && el) {
-            el.classList.remove('ms-unrevealed');
-            el.classList.add('bg-rose-950/90', 'border-rose-600');
+            el.className = 'ms-cell rounded-lg flex items-center justify-center bg-rose-950/90 border border-rose-600';
             el.innerText = '💣';
           }
         }
@@ -759,7 +769,7 @@
     }
 
     function updateCounters() {
-      mineCountDisplay.innerText = String(matchConfig.mines - flagsPlaced).padStart(3, '0');
+      mineCountDisplay.innerText = String(Math.max(0, matchConfig.mines - flagsPlaced)).padStart(3, '0');
     }
 
     function handleTouchStart(e, r, c) {
